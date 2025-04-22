@@ -1,0 +1,132 @@
+/* Topbar */
+.topbar {
+    background: #009688;
+    color: white;
+    display: flex;
+    justify-content: flex-end;
+    padding: 10px 30px;
+    gap: 20px;
+    font-size: 14px;
+  }
+  
+  /* Navbar */
+  .navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    background-color: white;
+    border-bottom: 1px solid #ccc;
+  }
+  
+  .navbar .logo {
+    font-size: 28px;
+    font-weight: bold;
+    color: #00796b;
+  }
+  
+  .navbar ul {
+    list-style: none;
+    display: flex;
+    gap: 30px;
+  }
+  
+  .navbar ul li {
+    cursor: pointer;
+    font-weight: 500;
+  }
+  
+  /* Main layout */
+  .main {
+    display: flex;
+    height: calc(100vh - 90px);
+  }
+  
+  /* Sidebar */
+  .sidebar {
+    width: 200px;
+    background-color: #00695c;
+    color: white;
+    padding: 20px;
+  }
+  
+  .sidebar h3 {
+    margin-bottom: 20px;
+  }
+  
+  .sidebar ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .sidebar li {
+    padding: 10px 0;
+    cursor: pointer;
+  }
+  
+  .sidebar li.active {
+    background-color: #00897b;
+    padding-left: 10px;
+    font-weight: bold;
+  }
+  
+  /* Content area */
+  .content {
+    flex: 1;
+    padding: 30px;
+    background-color: #f5f5f5;
+  }
+  
+  .content h1 {
+    font-size: 28px;
+    margin-bottom: 5px;
+  }
+  
+  .content p {
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 30px;
+  }
+  
+  /* Cards */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 20px;
+  }
+  
+  .card {
+    padding: 20px;
+    border-radius: 8px;
+    color: white;
+    font-weight: bold;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  
+  .card h3 {
+    font-size: 18px;
+  }
+  
+  .card p {
+    font-size: 24px;
+    margin: 10px 0;
+  }
+  
+  .card span {
+    font-size: 12px;
+    color: rgba(255,255,255,0.9);
+  }
+  
+  /* Color classes */
+  .card.blue { background-color: #2196f3; }
+  .card.cyan { background-color: #00bcd4; }
+  .card.teal { background-color: #009688; }
+  .card.orange { background-color: #ff9800; }
+  .card.navy { background-color: #3f51b5; }
+  .card.green { background-color: #4caf50; }
+  .card.red { background-color: #f44336; }
+  .card.gold { background-color: #ffc107; }
+  
