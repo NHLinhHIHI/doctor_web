@@ -1,0 +1,220 @@
+.medical-exam-container {
+  background-color: #ffffff;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.medical-exam-container h2 {
+  color: #209b91;
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+.patient-info-section, 
+.prescription-section,
+.notes-section {
+  margin-bottom: 20px;
+}
+
+.prescription-section h3 {
+  color: #209b91;
+  margin-top: 0;
+  margin-bottom: 15px;
+}
+
+.form-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.form-group {
+  flex: 1;
+}
+
+.form-group.full-width {
+  flex: 100%;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #1bb9b7;
+}
+
+/* Styling for medication section */
+.medication-header {
+  display: flex;
+  background-color: #f5f5f5;
+  padding: 10px 15px;
+  border-radius: 5px;
+  margin-bottom: 10px;
+  font-weight: 500;
+  color: #666;
+}
+
+.medication-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  gap: 10px;
+}
+
+.medication-name {
+  flex: 2;
+}
+
+.medication-dosage,
+.medication-quantity,
+.medication-frequency {
+  flex: 1;
+}
+
+.medication-action {
+  width: 40px;
+  display: flex;
+  justify-content: center;
+}
+
+.remove-btn {
+  background: none;
+  border: none;
+  color: #ff6b6b;
+  cursor: pointer;
+  padding: 5px;
+  font-size: 16px;
+}
+
+.remove-btn:disabled {
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+.add-medication {
+  margin-top: 10px;
+}
+
+.add-btn {
+  background-color: #e9f7f7;
+  color: #1bb9b7;
+  border: 1px dashed #1bb9b7;
+  border-radius: 5px;
+  padding: 8px 15px;
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.add-btn:hover {
+  background-color: #d0f0f0;
+}
+
+textarea.form-control {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.save-btn, .print-btn, .reset-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.save-btn {
+  background-color: #1bb9b7;
+  color: white;
+}
+
+.print-btn {
+  background-color: #4d8af0;
+  color: white;
+}
+
+.reset-btn {
+  background-color: #f2f2f2;
+  color: #666;
+}
+
+.save-btn:hover {
+  background-color: #0f8483;
+}
+
+.print-btn:hover {
+  background-color: #3979e3;
+}
+
+.reset-btn:hover {
+  background-color: #e0e0e0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .form-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .medication-row {
+    flex-wrap: wrap;
+  }
+
+  .medication-name {
+    flex: 100%;
+  }
+
+  .medication-dosage,
+  .medication-quantity,
+  .medication-frequency {
+    flex: 1;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+}
+
+/* Print styles */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .medical-exam-container,
+  .medical-exam-container * {
+    visibility: visible;
+  }
+  .medical-exam-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    box-shadow: none;
+    padding: 20px;
+  }
+  .add-btn,
+  .remove-btn,
+  .action-buttons {
+    display: none;
+  }
+}

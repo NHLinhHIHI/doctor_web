@@ -13,7 +13,8 @@ const doctorRoutes = require("./routes/doctor"); // thêm dòng này
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/user");
 
-app.use("/auth", authRoutes);
+// Tạm thời comment route auth để tắt xác thực
+// app.use("/auth", authRoutes);
 app.use("/user", userRoutes);
 app.use("/doctor", doctorRoutes); // thêm dòng này
 
