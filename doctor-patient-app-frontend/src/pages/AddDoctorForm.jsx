@@ -6,10 +6,12 @@ import "./addDoctorForm.css"; // Tạo file CSS riêng cho form
 function AddDoctorForm() {
   const [formData, setFormData] = useState({
     email: "",
+    
     password: "",
     fullName: "",
     phone: "",
     address: "",
+    specialty: "",
     birthDate: "",
     experience: "",
     note: "",
@@ -36,7 +38,7 @@ function AddDoctorForm() {
     <form onSubmit={handleSubmit}>
       <h2>Create Doctor</h2>
       {[
-        "email", "password", "fullName", "phone", "address", 
+        "email", "password", "fullName", "phone", "address", "specialty",
         "birthDate", "experience", "note", "CCCD"
       ].map((field) => (
         <div key={field}>

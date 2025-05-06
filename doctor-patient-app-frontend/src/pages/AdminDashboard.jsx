@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import "./admin.css";
 import AddDoctorForm from "./AddDoctorForm";
-
+import NotificationCardList from "./NotificationCardList";
+import AdminSchedule from "./AdminSchedule";
 function AdminDashboard() {
   const user = JSON.parse(localStorage.getItem("user"));
   const [activeView, setActiveView] = useState("dashboard");
@@ -14,6 +15,10 @@ function AdminDashboard() {
     switch (activeView) {
       case "add-doctor":
         return <AddDoctorForm />;
+        case "notifications":
+      return <NotificationCardList />;
+      case "schedule":
+      return <AdminSchedule />;
       default:
         return (
           <>
@@ -25,8 +30,8 @@ function AdminDashboard() {
                 { title: "Payments", count: 2, color: "blue" },
                 { title: "Doctors", count: 5, color: "cyan", view: "add-doctor" },
                 { title: "Patients", count: 20, color: "orange" },
-                { title: "Accountants", count: 1, color: "navy" },
-                { title: "Pharmacists", count: 4, color: "green" },
+                { title: "Notifications", count: 1, color: "navy", view: "notifications" },
+                { title: "Schedule ", count: 4, color: "green" ,view: "schedule"},
                 { title: "Laboratories", count: 3, color: "red" },
                 { title: "Receptionists", count: 8, color: "gold" },
               ].map((item, idx) => (
