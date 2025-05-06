@@ -11,7 +11,7 @@ function DoctorHome() {
   const [doctor, setDoctor] = useState(null);
   const [patients, setPatients] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState("Hồ Sơ");
+  const [activeTab, setActiveTab] = useState("Khám Bệnh"); // Đổi tab mặc định thành Khám Bệnh
 
   useEffect(() => {
     // Lấy thông tin doctor từ localStorage
@@ -111,6 +111,12 @@ function DoctorHome() {
           <h3>Chức Năng</h3>
           <ul>
             <li 
+              className={activeTab === "Khám Bệnh" ? "active" : ""} 
+              onClick={() => setActiveTab("Khám Bệnh")}
+            >
+              Khám Bệnh
+            </li>
+            <li 
               className={activeTab === "Hồ Sơ" ? "active" : ""} 
               onClick={() => setActiveTab("Hồ Sơ")}
             >
@@ -121,12 +127,6 @@ function DoctorHome() {
               onClick={() => setActiveTab("Lịch")}
             >
               Lịch Khám Bệnh
-            </li>
-            <li 
-              className={activeTab === "Khám Bệnh" ? "active" : ""} 
-              onClick={() => setActiveTab("Khám Bệnh")}
-            >
-              Khám Bệnh
             </li>
             <li 
               className={activeTab === "Thông tin" ? "active" : ""} 

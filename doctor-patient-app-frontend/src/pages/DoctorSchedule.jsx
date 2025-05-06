@@ -11,6 +11,7 @@ function DoctorSchedule() {
     shift: 'Ca sáng',
     startTime: '08:00',
     endTime: '12:00',
+    room: '001', // Thêm trường room với giá trị mặc định
   });
 
   // Tạo dữ liệu lịch mẫu
@@ -133,7 +134,7 @@ function DoctorSchedule() {
       shift: newSchedule.shift,
       startTime: newSchedule.startTime,
       endTime: newSchedule.endTime,
-      room: '001',  // Mặc định
+      room: newSchedule.room,  // Sử dụng giá trị phòng từ state
       status: 'open'  // Mặc định
     };
     
@@ -144,6 +145,7 @@ function DoctorSchedule() {
       shift: 'Ca sáng',
       startTime: '08:00',
       endTime: '12:00',
+      room: '001',
     });
   };
 
@@ -248,6 +250,19 @@ function DoctorSchedule() {
                 <option value="Ca sáng">Ca sáng</option>
                 <option value="Ca chiều">Ca chiều</option>
                 <option value="Ca tối">Ca tối</option>
+              </select>
+            </div>
+            
+            <div className="form-group">
+              <label>Phòng</label>
+              <select 
+                name="room"
+                value={newSchedule.room}
+                onChange={handleInputChange}
+              >
+                <option value="001">001</option>
+                <option value="002">002</option>
+                <option value="003">003</option>
               </select>
             </div>
             
