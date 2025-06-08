@@ -3,6 +3,7 @@ import "./admin.css";
 import AddDoctorForm from "./AddDoctorForm";
 import NotificationCardList from "./NotificationCardList";
 import AdminSchedule from "./AdminSchedule";
+import MedicineList from "./MedicineList";
 function AdminDashboard() {
   const user = JSON.parse(localStorage.getItem("user"));
   const [activeView, setActiveView] = useState("dashboard");
@@ -19,36 +20,10 @@ function AdminDashboard() {
       return <NotificationCardList />;
       case "schedule":
       return <AdminSchedule />;
+      case "Medicine":
+      return <MedicineList />;
       default:
-        return (
-          <>
-            <h1>Dashboard</h1>
-            <p>Hospital Human Resources</p>
-
-            <div className="cards">
-              {[
-                { title: "Payments", count: 2, color: "blue" },
-                { title: "Doctors", count: 5, color: "cyan", view: "add-doctor" },
-                { title: "Patients", count: 20, color: "orange" },
-                { title: "Notifications", count: 1, color: "navy", view: "notifications" },
-                { title: "Schedule ", count: 4, color: "green" ,view: "schedule"},
-                { title: "Laboratories", count: 3, color: "red" },
-                { title: "Receptionists", count: 8, color: "gold" },
-              ].map((item, idx) => (
-                <div
-                  className={`card ${item.color}`}
-                  key={idx}
-                  onClick={() => item.view && setActiveView(item.view)}
-                  style={{ cursor: item.view ? "pointer" : "default" }}
-                >
-                  <h3>{item.title}</h3>
-                  <p>{item.count}</p>
-                  <span>More</span>
-                </div>
-              ))}
-            </div>
-          </>
-        );
+          return <h2>Hello Admin</h2>;
     }
   };
 
@@ -71,16 +46,35 @@ function AdminDashboard() {
 
       <div className="main">
         <aside className="sidebar">
-          <h3>Navigation</h3>
-          <ul>
-            <li
-              className={activeView === "dashboard" ? "active" : ""}
-              onClick={() => setActiveView("dashboard")}
-            >
-              Dashboard
-            </li>
-          </ul>
-        </aside>
+  <h3>Navigation</h3>
+  <ul>
+    <li
+      className={activeView === "dashboard" ? "active" : ""}
+      onClick={() => setActiveView("dashboard")}
+    >
+      Manager
+    </li>
+    <li
+      className={activeView === "add-doctor" ? "active" : ""}
+      onClick={() => setActiveView("add-doctor")}
+    >
+      Add Doctor
+    </li>
+    <li
+      className={activeView === "schedule" ? "active" : ""}
+      onClick={() => setActiveView("schedule")}
+    >
+      Schedule
+    </li>
+    <li
+      className={activeView === "Medicine" ? "active" : ""}
+      onClick={() => setActiveView("Medicine")}
+    >
+      Medicine Manager
+    </li>
+  </ul>
+</aside>
+
 
         <section className="content">{renderContent()}</section>
       </div>
