@@ -3,7 +3,14 @@ const express = require("express");
 const { admin, db } = require("../firebase");
 const bcrypt = require("bcrypt");
 const router = express.Router();
-
+const nodemailer = require("nodemailer");
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'LINH.NH18886@sinhvien.hoasen.edu.vn',
+    pass: 'mfzg jvaj lkvn nmoz', // Mật khẩu ứng dụng Gmail (không phải mật khẩu thường)
+  }
+});
 // API tạo doctor mới
 router.post("/create-doctor", async (req, res) => {
   const {
@@ -44,6 +51,19 @@ router.post("/create-doctor", async (req, res) => {
       CCCD,
       createdAt: new Date(),
     });
+    const mailOptions = {
+      from: 'LINH.NH18886@sinhvien.hoasen.edu.vn',
+      to: email,
+      subject: "Tài khoản bác sĩ đã được tạo",
+      text: `Xin chào ${fullName},\n\nTài khoản của bạn đã được tạo thành công:\n\n📧 Email: ${email}\n🔐 Mật khẩu: ${password}\n\nVui lòng đăng nhập và đổi mật khẩu sau lần đăng nhập đầu tiên.\n\nTrân trọng,\nPhòng khám`
+    };
+
+    transporter.sendMail(mailOptions, function (error, info) {
+      if (error) {
+        console.error("Gửi email thất bại:", error);
+      } else {
+        console.log("Email đã gửi:", info.response);
+      }});
 
     res.json({ success: true, message: "Doctor created", uid });
   } catch (error) {

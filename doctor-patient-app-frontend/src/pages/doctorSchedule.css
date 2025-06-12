@@ -1,10 +1,192 @@
-/* CSS cho lịch làm việc của bác sĩ */
-.doctor-schedule {
-  display: flex;
-  gap: 30px;
-  padding: 0 20px;
+.room-input {
+  padding: 6px;
+  font-size: 14px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
 }
 
+/* Toggle Switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 24px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #4caf50;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+.schedule-item.open {
+  border-left: 5px solid green;
+}
+.schedule-item.closed {
+  border-left: 5px solid gray;
+}
+.schedule-item .doctor-booked {
+  border-left: 5px solid orange;
+}
+.notifications-section {
+ margin-top: 40px;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  background-color: white;
+}
+
+.notifications-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.notifications-table th,
+.notifications-table td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: center;
+}
+
+.notifications-table th {
+  background-color: #e0e0e0;
+}
+
+/* CSS cho lịch làm việc của bác sĩ */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 400px;
+  max-width: 90%;
+}
+
+.modal-content textarea {
+  width: 100%;
+  min-height: 80px;
+  margin: 10px 0;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.doctor-schedule {
+  display: flex;
+  gap: 20px;
+  flex-direction: row;
+
+}
+.doctor-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 10px;
+}
+.doctor-card {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+}
+.doctor-booked {
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: #333;
+}
+.doctor-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.patient-card {
+  background: #f8f8f8;
+  padding: 16px;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.card-header img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.patient-info p { 
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.view-button {
+  margin-left: auto;
+  padding: 8px 12px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
 /* CSS cho container lịch */
 .calendar-container {
   flex: 1;
@@ -129,7 +311,20 @@
   transition: background-color 0.3s;
   font-weight: 500;
 }
-
+.main-container {
+  display: flex;
+  flex-direction: column; /* xếp dọc thay vì ngang */
+  gap: 20px;
+  padding: 20px;
+}
+.waiting-doctor-section {
+  width: 100%;
+  background-color: #fff;
+  padding: 16px;
+  margin-top: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 6px rgba(0,0,0,0.1);
+}
 .add-schedule-btn:hover {
   background-color: #0f8483;
 }
@@ -137,6 +332,7 @@
 /* CSS cho thông tin ngày đã chọn */
 .selected-date-info {
   flex: 1;
+  min-width: 300px;
   background-color: white;
   border-radius: 10px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);

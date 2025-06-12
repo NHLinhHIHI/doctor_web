@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import Login from "./pages/login";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -6,8 +6,18 @@ import DoctorHome from "./pages/DoctorHome";
 import PatientDetail from "./pages/PatientDetail";
 import MedicalExam from "./pages/MedicalExam";
 import PatientExaminationHistory from "./pages/PatientExaminationHistory";
+import PatientDetail2 from "./pages/PatientDetail2";
+
+
 
 function App() {
+  const [currentView, setCurrentView] = useState("list");
+  const [selectedPatientId, setSelectedPatientId] = useState(null);
+
+  const handleViewPatientDetail = (patientID) => {
+    setSelectedPatientId(patientID);
+    setCurrentView("detail");
+  };
   return (
     <Router>
       <Routes>
@@ -18,6 +28,7 @@ function App() {
         <Route path="/medical-exam/:appointmentId" element={<MedicalExam />} />
         <Route path="/examination-history/:patientId" element={<PatientExaminationHistory />} />
         {/* Add more routes as needed */}
+        <Route path="/patient2/:patientId" element={<PatientDetail2 />} />
       </Routes>
     </Router>
     

@@ -19,6 +19,7 @@ app.use(express.json());
 // Import các routes
 const doctorRoutes = require("./routes/doctor");
 const scheduleRoutes = require("./routes/schedule");
+const scheduleRoutes2 = require("./routes/schedule2");
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/user");
 const notificationRoutes = require("./routes/notifications");
@@ -28,7 +29,13 @@ const patientProfileRoutes = require("./routes/patientProfile");
 const diagnosticRoutes = require("./routes/diagnostic");
 
 // Đăng ký các routes
+const medicineRoutes = require("./routes/medicine");
+const manager = require("./routes/manager");
+const chat = require("./routes/chat");
+//Tạm thời comment route auth để tắt xác thực
 app.use("/auth", authRoutes);
+app.use("/manager", manager);
+app.use("/medicine", medicineRoutes);
 app.use("/user", userRoutes);
 app.use("/doctor", doctorRoutes);
 app.use("/api/doctor", doctorRoutes);
@@ -42,6 +49,11 @@ app.use("/api/diagnostic", diagnosticRoutes); // Route chẩn đoán để debug
 app.use('/api', require('./routes/user'));
 
 // Route mặc định
+app.use("/notifications", notificationRoutes); 
+//app.use("/api", notificationRoutes);
+app.use("/schedule", scheduleRoutes);
+app.use("/chat", chat);
+app.use("/schedule2", scheduleRoutes2);
 app.get("/", (req, res) => {
   res.send("Doctor-Patient API is running...");
 });

@@ -5,6 +5,7 @@ import "./doctor.css";
 import { FaSearch, FaSignOutAlt, FaUserPlus, FaSyncAlt, FaFilter, FaHistory } from "react-icons/fa";
 import DoctorSchedule from "./DoctorSchedule";
 import MedicalExam from "./MedicalExam";
+import Chat from "./chat";
 
 // Auto retry component
 const AutoRetry = ({ onRetry }) => {
@@ -348,6 +349,12 @@ function DoctorHome() {
               Khám Bệnh
             </li>
             <li
+              className={activeTab === "Chat" ? "active" : ""}
+              onClick={() => setActiveTab("Chat")}
+            >
+              chat với bệnh nhân
+            </li>
+            <li
               className={activeTab === "Thông tin" ? "active" : ""}
               onClick={() => setActiveTab("Thông tin")}
             >
@@ -542,6 +549,12 @@ function DoctorHome() {
             <MedicalExam />
           </section>
         )}
+
+        {activeTab === "Chat" && (
+          <section className="doctor-content">
+            <Chat />
+          </section>
+        )} 
 
         {activeTab === "Thông tin" && (
           <section className="doctor-content personal-info-content">
