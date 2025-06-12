@@ -27,7 +27,6 @@ const medicalExamRoutes = require("./routes/medicalExam");
 const patientRoutes = require("./routes/patient");
 const patientProfileRoutes = require("./routes/patientProfile");
 const diagnosticRoutes = require("./routes/diagnostic");
-
 // Đăng ký các routes
 const medicineRoutes = require("./routes/medicine");
 const manager = require("./routes/manager");

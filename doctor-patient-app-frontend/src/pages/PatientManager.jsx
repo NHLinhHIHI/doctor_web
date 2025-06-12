@@ -90,7 +90,7 @@ const navigate = useNavigate();
           <table className="doctor-summary">
             <thead>
               <tr>
-                <th>Mã bác sĩ</th>
+                {/* <th>Mã bác sĩ</th> */}
                 <th>Tên</th>
                 <th>Ca</th>
                 <th>Phòng</th>
@@ -102,7 +102,7 @@ const navigate = useNavigate();
               {groupByDoctor().map((group) => (
                 <React.Fragment key={group.doctorID}>
                   <tr>
-                    <td>{group.doctorID}</td>
+                    {/* <td>{group.doctorID}</td> */}
                     <td>{group.doctorName}</td>
                     <td>{group.shift}</td>
                     <td>{group.room}</td>
@@ -131,7 +131,7 @@ const navigate = useNavigate();
                                 <div className="card-header">
                                   <img src={image} alt={name} />
                                   <div className="patient-info">
-                                    <p><strong>Mã hồ sơ:</strong> {ID}</p>
+                                    {/* <p><strong>Mã hồ sơ:</strong> {ID}</p> */}
                                     <p><strong>Tên:</strong> {name}</p>
                                     
                                     

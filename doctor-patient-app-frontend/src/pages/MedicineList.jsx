@@ -21,8 +21,15 @@ const MedicineList = () => {
   }, []);
 
   const handleDelete = async (id) => {
-    await axios.delete(`http://localhost:5000/medicine/${id}`);
+    const confirmDelete = window.confirm("Bạn có chắc chắn muốn xoá thuốc này không?");
+    if (!confirmDelete) return;
+    try {  await axios.delete(`http://localhost:5000/medicine/${id}`);
     fetchMedicines();
+    alert("Xoá thành công!");
+  }catch (error) {
+      console.error("Lỗi khi xoá:", error);
+      alert("Có lỗi xảy ra khi xoá thuốc.");
+    }
   };
 
   const handleEdit = (medicine) => {
@@ -105,8 +112,22 @@ const totalPages = Math.ceil(filteredMedicines.length / perPage);
             </tbody>
           </table>
 
-         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginTop: 20, gap: 10 }}>
-  <button disabled={page === 1} onClick={() => setPage(page - 1)}>⬅️ Trước</button>
+          <div style={{
+  position: "fixed",
+  bottom: 20,
+  left: "50%",
+  transform: "translateX(-50%)",
+  display: "flex",
+  gap: 10,
+  backgroundColor: "white",
+  padding: "5px 15px",
+  borderRadius: 10,
+  boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+  zIndex: 999
+}}>
+            {page > 1 && (
+              <button onClick={() => setPage(page - 1)}>⬅️ Trước</button>
+            )}
   <span>Trang {page}/{totalPages}</span>
   <button disabled={page === totalPages} onClick={() => setPage(page + 1)}>➡️ Tiếp</button>
 </div>
