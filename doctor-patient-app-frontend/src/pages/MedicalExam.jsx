@@ -62,11 +62,11 @@ const MedicalExam = () => {
   const [activeMedicationIndex, setActiveMedicationIndex] = useState(0); // Để biết đang nhập vào dòng thuốc nào
   // Get current doctor info
   const getCurrentDoctor = () => {
-    const doctorData = localStorage.getItem('currentDoctor');
+    const doctorData = localStorage.getItem('user');
     if (doctorData) {
       return JSON.parse(doctorData);
     }
-    return { id: "MW0d0z8l4maWvBZZytpZ29g5JJ23", name: "Bác sĩ Demo" };
+   // return { id: "MW0d0z8l4maWvBZZytpZ29g5JJ23", name: "Bác sĩ Demo" };
   };
 
   const currentDoctor = getCurrentDoctor();
@@ -139,11 +139,11 @@ const MedicalExam = () => {
         const appointmentsRef = collection(db, "HisSchedule");
         const appointmentQuery = query(
           appointmentsRef,
-          where("doctorId", "==", currentDoctor.id),
+          where("doctorID", "==", currentDoctor.id),
           where("status", "==", "wait"),
-          where("timeOrder", ">=", Timestamp.fromDate(startOfDay)),
-          where("timeOrder", "<=", Timestamp.fromDate(endOfDay)),
-          orderBy("timeOrder", "asc") // sắp xếp luôn trong query nếu được
+          where("examinationDate", ">=", Timestamp.fromDate(startOfDay)),
+          where("examinationDate", "<=", Timestamp.fromDate(endOfDay)),
+          //orderBy("timeOrder", "asc") // sắp xếp luôn trong query nếu được
         );
 
         const appointmentSnapshot = await getDocs(appointmentQuery);
