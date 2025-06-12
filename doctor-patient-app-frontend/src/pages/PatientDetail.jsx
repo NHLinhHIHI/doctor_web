@@ -18,80 +18,125 @@ function PatientDetail() {
       return;
     }
 
-    // Lấy thông tin bệnh nhân (giả lập)
+    // Lấy thông tin bệnh nhân
     fetchPatientDetails(patientId);
   }, [patientId, navigate]);
 
   const fetchPatientDetails = async (id) => {
     try {
       setLoading(true);
-      // Giả lập API call - thay thế bằng API thực tế sau này
-      setTimeout(() => {
-        const mockPatient = {
-          id: id,
-          name: id === "A123" ? "Lê Minh Quang" : id === "B456" ? "Nguyễn Văn An" : "Bệnh nhân",
-          birthDate: "12/05/1990",
-          gender: "Nam",
-          address: "123 Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh",
-          phone: "0901234567",
-          email: "patient@example.com",
-          image: "/images/avatar.png",
-          medicalHistory: [
-            {
-              date: "14/03/2025",
-              diagnosis: "Viêm xoang mũi",
-              doctor: "Dr. Nguyễn Văn A",
-              prescription: "Augmentin 500mg (2 lần/ngày), Paracetamol 500mg khi sốt",
-              notes: "Bệnh nhân cần nghỉ ngơi 3 ngày, uống nhiều nước."
-            },
-            {
-              date: "05/01/2025",
-              diagnosis: "Cảm cúm",
-              doctor: "Dr. Trần Thị B",
-              prescription: "Panadol Extra (3 lần/ngày), Vitamin C 500mg",
-              notes: "Theo dõi nếu sốt cao trên 39 độ."
-            }
-          ],
-          upcomingAppointments: [
-            {
-              date: "28/04/2025",
-              time: "09:30",
-              doctor: "Dr. Nguyễn Văn A",
-              department: "Tai Mũi Họng",
-              status: "Đã xác nhận"
-            }
-          ],
+      
+      // Gọi API thực tế để lấy thông tin bệnh nhân
+      const API_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000//';
+      const response = await fetch(`${API_URL}/api/patient/${id}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        // Xử lý dữ liệu từ API để phù hợp với cấu trúc hiển thị
+        const patientData = data.patient;
+        
+        // Kiểm tra và xử lý cấu trúc mới (ProfileNormal và HealthProfile là mảng)
+        let name = "Không có tên";
+        let birthDate = "Không xác định";
+        let gender = "Không xác định";        let address = "Chưa cập nhật";
+        let phone = "Chưa cập nhật";
+        let cccd = "";
+        
+        // Xử lý ProfileNormal nếu là mảng theo cấu trúc mới
+        // PatientNormal array structure: [Name, DoB, Phone, Gender, CCCD, Address]
+        if (patientData.ProfileNormal && Array.isArray(patientData.ProfileNormal)) {
+          name = patientData.ProfileNormal[0] || name;
+          birthDate = patientData.ProfileNormal[1] || birthDate;
+          phone = patientData.ProfileNormal[2] || phone;
+          gender = patientData.ProfileNormal[3] || gender;
+          cccd = patientData.ProfileNormal[4] || cccd;
+          address = patientData.ProfileNormal[5] || address;
+        } else {
+          // Fallback cho cấu trúc cũ
+          name = patientData.name || name;
+          birthDate = patientData.birthDate || birthDate;
+          gender = patientData.gender || gender;
+          address = patientData.address || address;
+          phone = patientData.phone || phone;
+          cccd = patientData.cccd || cccd;
+        }
+        
+        // Xử lý HealthProfile nếu là mảng theo cấu trúc mới
+        // HealthProfile array structure: [HeartRate, Height, Eye, Weight, medicalHistory]
+        let heartRate = "N/A";
+        let height = "N/A";
+        let Eye = "N/A";
+        let weight = "N/A";
+        let medicalHistoryText = "";
+          if (patientData.HealthProfile && Array.isArray(patientData.HealthProfile)) {
+          heartRate = patientData.HealthProfile[0] || heartRate;
+          height = patientData.HealthProfile[1] || height;
+          Eye = patientData.HealthProfile[2] || Eye;
+          // rightEye = patientData.HealthProfile[3] || rightEye;
+          weight = patientData.HealthProfile[3] || weight;
+          medicalHistoryText = patientData.HealthProfile[4] || medicalHistoryText;
+        } 
+
+        // Chuẩn bị dữ liệu để phù hợp với component
+        const formattedPatient = {
+          id: patientData.id,
+          name: name,
+          birthDate: birthDate,
+          gender: gender,
+          address: address,
+          phone: phone,
+          cccd: cccd,
+          email: patientData.email || "Chưa cập nhật",
+          image: "/images/avatar.png", // Hình mặc định
+          
+          // Thông số sinh tồn
           vitalSigns: {
-            bloodPressure: "120/80 mmHg",
-            heartRate: "75 bpm",
-            temperature: "36.5°C",
-            respiratoryRate: "16 rpm",
-            height: "170 cm",
-            weight: "68 kg",
-            bmi: "23.5",
-            bloodType: "O+"
+            heartRate: heartRate,
+            height: height,
+            weight: weight,
+            bmi: patientData.vitalSigns?.bmi || "N/A",
+            bloodPressure: "N/A", // API chưa có thông tin này
+            temperature: "N/A", // API chưa có thông tin này
+            respiratoryRate: "N/A", // API chưa có thông tin này
+            bloodType: "N/A", // API chưa có thông tin này
+            Eye: Eye,
+            // rightEye: rightEye,
+            medicalHistoryText: medicalHistoryText
           },
-          allergies: ["Penicillin", "Hải sản"],
-          labResults: [
-            {
-              date: "14/03/2025",
-              testName: "Công thức máu",
-              result: "Bình thường",
-              referenceRange: "WBC: 4.5-11.0 x10^3/μL",
-              notes: "Không có bất thường đáng kể"
-            },
-            {
-              date: "14/03/2025",
-              testName: "X-quang ngực",
-              result: "Bình thường",
-              referenceRange: "N/A",
-              notes: "Không phát hiện bất thường"
-            }
-          ]
+          
+          // Dị ứng (nếu có)
+          allergies: patientData.allergies || [],
+          
+          // Lịch sử y tế
+          medicalHistory: patientData.examinations?.map(exam => ({
+            date: exam.date,
+            diagnosis: exam.diagnosis,
+            doctor: exam.doctor,
+            prescription: exam.prescription?.map(p => 
+              `${p.medicine} (${p.dosage}, ${p.usage})`
+            ).join(", ") || "Không có đơn thuốc",
+            notes: exam.notes || "Không có ghi chú"
+          })) || [],
+          
+          // Lịch hẹn sắp tới
+          upcomingAppointments: patientData.upcomingAppointments?.map(apt => ({
+            date: apt.date,
+            time: apt.time,
+            doctor: apt.doctor,
+            department: apt.department,
+            status: apt.status
+          })) || [],
+          
+          // Kết quả xét nghiệm (nếu có)
+          labResults: patientData.labResults || []
         };
-        setPatient(mockPatient);
-        setLoading(false);
-      }, 500);
+        
+        setPatient(formattedPatient);
+      } else {
+        console.error("Không thể lấy thông tin bệnh nhân:", data.error);
+      }
+      
+      setLoading(false);
     } catch (error) {
       console.error("Error fetching patient details:", error);
       setLoading(false);

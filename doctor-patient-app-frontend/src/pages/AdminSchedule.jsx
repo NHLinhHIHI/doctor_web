@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import './doctorSchedule.css'; // Dùng lại CSS của admin nếu giống
+import './doctorSchedule.css';
 
-function DoctorScheduleView() {
+function AdminSchedule() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
-  const [savedSchedules, setSavedSchedules] = useState({});
-  const [doctor, setDoctor] = useState(null);
+  const [slotStatuses, setSlotStatuses] = useState({});
+  const [savedSchedules, setSavedSchedules] = useState({}); // Lưu lịch từ Firestore
 
-  const shifts = ['Morning', 'Afternoon'];
+  const shifts = ['Ca sáng', 'Ca chiều'];
   const rooms = ['001', '002'];
 
   const formatDate = (date) => {
@@ -36,52 +36,66 @@ function DoctorScheduleView() {
 
   const handleDateClick = (date) => {
     setSelectedDate(date);
+    const iso = formatISODate(date);
+
+    // Nếu có dữ liệu đã lưu, cập nhật trạng thái slot
+    if (savedSchedules[iso]) {
+      const newStatus = {};
+      savedSchedules[iso].morningRooms.forEach(room => newStatus[`Ca sáng_${room}`] = 'open');
+      savedSchedules[iso].afternoonRooms.forEach(room => newStatus[`Ca chiều_${room}`] = 'open');
+      setSlotStatuses(newStatus);
+    } else {
+      setSlotStatuses({});
+    }
   };
-  const handleRegister = async (shift, room) => {
-    if (!selectedDate || !doctor) return;
-  
-    const dateStr = formatISODate(selectedDate);
-    const confirm = window.confirm(`Bạn có muốn đăng ký ${shift}, phòng ${room} ngày ${formatDate(selectedDate)} không?`);
-    if (!confirm) return;
-  
+
+  const toggleSlot = (shift, room) => {
+    const key = `${shift}_${room}`;
+    setSlotStatuses(prev => ({
+      ...prev,
+      [key]: prev[key] === 'open' ? 'closed' : 'open'
+    }));
+  };
+
+  const handleSaveSchedule = async () => {
+    if (!selectedDate) {
+      alert('Vui lòng chọn ngày');
+      return;
+    }
+
+    const isoDate = formatISODate(selectedDate);
+    const morningRooms = rooms.filter(room => slotStatuses[`Ca sáng_${room}`] === 'open');
+    const afternoonRooms = rooms.filter(room => slotStatuses[`Ca chiều_${room}`] === 'open');
+
+    if (morningRooms.length === 0 && afternoonRooms.length === 0) {
+      alert('Bạn chưa chọn phòng nào để mở!');
+      return;
+    }
+
     try {
-      const res = await fetch("http://localhost:5000/schedule/register", {
+      const res = await fetch("http://localhost:5000/schedule/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          date: dateStr,
-          shift,
-          room,
-          doctorID: doctor.id
-        })
+          date: isoDate,
+          morningRooms,
+          afternoonRooms
+        }),
       });
-  
-      const result = await res.json();
-      if (res.ok) {
-        alert("Đăng ký thành công. Đang đợi admin duyệt.");
-      } else {
-        alert(`Lỗi: ${result.message}`);
-      }
+
+      if (!res.ok) throw new Error("Không thể thêm lịch");
+      alert("Lịch đã được thêm vào hệ thống!");
+
+      // Cập nhật lại savedSchedules sau khi thêm
+      setSavedSchedules(prev => ({
+        ...prev,
+        [isoDate]: { morningRooms, afternoonRooms }
+      }));
     } catch (err) {
-      console.error("Đăng ký thất bại:", err);
-      alert("Lỗi khi đăng ký ca.");
+      console.error(err);
+      alert("Lỗi khi thêm lịch");
     }
   };
-  useEffect(() => {
-    const userInfo = JSON.parse(localStorage.getItem("user"));
-    if (userInfo && userInfo.role === "doctor") {
-      setDoctor(userInfo); // doctor.id dùng trong đăng ký
-      fetchSchedules();
-    } else {
-      window.location.href = "/";
-    }
-    
-    // Add cleanup function
-    return () => {
-      // This ensures any pending promises or listeners are properly cleaned up
-      // when the component unmounts
-    };
-  }, []);  
 
   const fetchSchedules = async () => {
     try {
@@ -89,6 +103,7 @@ function DoctorScheduleView() {
       if (!res.ok) throw new Error("Không thể tải lịch");
       const data = await res.json();
 
+      // Chuyển về object theo date
       const schedulesMap = {};
       data.forEach(sch => {
         schedulesMap[sch.date] = {
@@ -165,52 +180,50 @@ function DoctorScheduleView() {
         </div>
       </div>
 
-      {selectedDate && (() => {
-        const isoDate = formatISODate(selectedDate);
-        const schedule = savedSchedules[isoDate];
+      {selectedDate && (
+        <div className="selected-date-info">
+          <h3>{getDayName(selectedDate)}, {formatDate(selectedDate)}</h3>
 
-        if (!schedule) {
-          return <div className="selected-date-info"><h3>Không có ca nào được mở trong ngày này</h3></div>;
-        }
+          {shifts.map((shift) =>
+            rooms.map((room) => {
+              const key = `${shift}_${room}`;
+              const status = slotStatuses[key] || 'closed';
+              const startTime = shift === 'Ca sáng' ? '08:00' : '13:00';
+              const endTime = shift === 'Ca sáng' ? '12:00' : '17:00';
 
-        return (
-          <div className="selected-date-info">
-            <h3>{getDayName(selectedDate)}, {formatDate(selectedDate)}</h3>
-
-            {shifts.map((shift) =>
-              rooms.map((room) => {
-                const isOpen = (
-                  (shift === 'Morning' && schedule.morningRooms.includes(room)) ||
-                  (shift === 'Afternoon' && schedule.afternoonRooms.includes(room))
-                );
-                if (!isOpen) return null;
-
-                const startTime = shift === 'Ca sáng' ? '08:00' : '13:00';
-                const endTime = shift === 'Ca sáng' ? '12:00' : '17:00';
-
-                return (
-                  
-                  <div key={`${shift}_${room}`} className="schedule-item open"onClick={() => handleRegister(shift, room)}>
-                    <div className="schedule-weather"><i className="weather-icon">📅</i></div>
-                    <div className="schedule-details">
-                      <div className="schedule-shift">{shift}</div>
-                      <div className="schedule-time">{startTime} - {endTime}</div>
-                      <div className="schedule-room">Phòng: {room}</div>
-                      
-                    </div>
-                    
-                    <div className="schedule-status open">
-                      <span>Open</span>
-                    </div>
+              return (
+                <div
+                  key={key}
+                  className={`schedule-item ${status}`}
+                  onClick={() => toggleSlot(shift, room)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div className="schedule-weather"><i className="weather-icon">📅</i></div>
+                  <div className="schedule-details">
+                    <div className="schedule-shift">{shift}</div>
+                    <div className="schedule-time">{startTime} - {endTime}</div>
+                    <div className="schedule-room">Phòng: {room}</div>
                   </div>
-                );
-              })
-            )}
+                  <div className={`schedule-status ${status}`}>
+                    <span>{status === 'open' ? 'Open' : 'Closed'}</span>
+                  </div>
+                </div>
+              );
+            })
+          )}
+
+          <button className="save-btn" onClick={handleSaveSchedule}>
+            Thêm lịch
+          </button>
+
+          <div style={{ marginTop: '50px' }}>
+            {/* Nơi hiển thị trạng thái đang xét duyệt nếu muốn */}
           </div>
-        );
-      })()}
+        </div>
+      )}
+      
     </div>
   );
 }
 
-export default DoctorScheduleView;
+export default AdminSchedule;

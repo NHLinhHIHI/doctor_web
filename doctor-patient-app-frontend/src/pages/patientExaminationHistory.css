@@ -1,0 +1,736 @@
+/* patientExaminationHistory.css */
+.patient-examination-history {
+  padding: 20px;
+  background-color: #f7f9fc;
+  min-height: 100vh;
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #f1f1f1;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+  margin-right: 20px;
+}
+
+.back-button:hover {
+  background-color: #e5e5e5;
+}
+
+.history-header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #333;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-container {
+  padding: 20px;
+  background-color: #fff5f5;
+  border: 1px solid #feb2b2;
+  border-radius: 8px;
+  margin: 20px 0;
+  text-align: center;
+}
+
+.error-message {
+  color: #c53030;
+  font-weight: 500;
+  margin-bottom: 15px;
+}
+
+.error-container button {
+  background-color: #3182ce;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.history-content {
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.patient-info-section {
+  display: flex;
+  padding: 20px;
+  background: linear-gradient(135deg, #e6f7ff 0%, #d1f0ff 100%);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.patient-avatar {
+  width: 120px;
+  height: 120px;
+  overflow: hidden;
+  border-radius: 10px;
+  border: 3px solid white;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-right: 20px;
+  flex-shrink: 0;
+}
+
+.patient-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.patient-details {
+  flex: 1;
+}
+
+.patient-details h2 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #2d3748;
+  font-size: 1.5rem;
+}
+
+.patient-details p {
+  margin: 5px 0;
+  color: #4a5568;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.patient-details strong {
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.examination-controls {
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.search-bar {
+  position: relative;
+  flex: 1;
+  max-width: 400px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #a0aec0;
+}
+
+.search-bar input {
+  width: 100%;
+  padding: 10px 10px 10px 35px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 0.95rem;
+}
+
+.filter-controls {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-group label {
+  font-size: 0.9rem;
+  color: #4a5568;
+  font-weight: 500;
+}
+
+.filter-group select {
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 0.9rem;
+}
+
+.no-examinations {
+  padding: 50px 20px;
+  text-align: center;
+}
+
+.no-examinations p {
+  font-size: 1.1rem;
+  color: #718096;
+  margin-bottom: 20px;
+}
+
+.reset-filter {
+  background-color: #3182ce;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.examination-history-list {
+  padding: 20px;
+}
+
+.summary-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 25px;
+  background-color: #f7fafc;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.stat-item {
+  flex: 1;
+  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.stat-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #3182ce;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: #4a5568;
+  text-align: center;
+  margin-top: 5px;
+}
+
+.month-group {
+  margin-bottom: 30px;
+}
+
+.month-header {
+  display: flex;
+  align-items: center;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2d3748;
+  padding: 10px 0;
+  border-bottom: 2px solid #edf2f7;
+  margin-bottom: 15px;
+}
+
+.month-header svg {
+  margin-right: 8px;
+  color: #4299e1;
+}
+
+.exam-count {
+  font-size: 0.9rem;
+  color: #718096;
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+.examinations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.examination-card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border-left: 4px solid #a0aec0;
+  cursor: pointer;
+}
+
+.examination-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.examination-card.general {
+  border-left-color: #4299e1;
+}
+
+.examination-card.emergency {
+  border-left-color: #e53e3e;
+}
+
+.examination-card.specialist {
+  border-left-color: #805ad5;
+}
+
+.examination-card.follow-up {
+  border-left-color: #38a169;
+}
+
+.examination-card.selected {
+  box-shadow: 0 0 0 2px #4299e1;
+}
+
+.examination-card.newest {
+  box-shadow: 0 4px 12px rgba(66, 153, 225, 0.3);
+  position: relative;
+}
+
+.examination-card.newest::after {
+  content: 'Mới nhất';
+  position: absolute;
+  top: -10px;
+  right: 10px;
+  background-color: #4299e1;
+  color: white;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.exam-header {
+  padding: 15px;
+  border-bottom: 1px solid #edf2f7;
+  background-color: #f8fafc;
+}
+
+.exam-date {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.date-value {
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.exam-type {
+  font-size: 0.8rem;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.exam-type.general {
+  background-color: #ebf8ff;
+  color: #2b6cb0;
+}
+
+.exam-type.emergency {
+  background-color: #fff5f5;
+  color: #c53030;
+}
+
+.exam-type.specialist {
+  background-color: #faf5ff;
+  color: #6b46c1;
+}
+
+.exam-type.follow-up {
+  background-color: #f0fff4;
+  color: #2f855a;
+}
+
+.doctor-info {
+  margin-top: 8px;
+  font-size: 0.9rem;
+  color: #4a5568;
+}
+
+.exam-body {
+  padding: 15px;
+}
+
+.exam-detail {
+  margin-bottom: 10px;
+}
+
+.exam-detail .label {
+  font-weight: 600;
+  color: #2d3748;
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.exam-detail .value {
+  color: #4a5568;
+}
+
+.medications {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.medications-header {
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #2d3748;
+}
+
+.medications-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.medication-item {
+  background-color: #f7fafc;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  border-left: 3px solid #4299e1;
+}
+
+.med-name {
+  font-weight: 600;
+  color: #2c5282;
+  margin-bottom: 5px;
+}
+
+.med-dosage, .med-frequency, .med-notes {
+  font-size: 0.85rem;
+  color: #4a5568;
+  margin-top: 3px;
+}
+
+.reexam-date {
+  margin-top: 15px;
+  padding: 10px;
+  background-color: #ebf8ff;
+  border-radius: 6px;
+  border-left: 3px solid #3182ce;
+}
+
+.highlight {
+  font-weight: 600;
+  color: #2b6cb0;
+}
+
+.exam-actions {
+  padding: 10px 15px;
+  border-top: 1px solid #edf2f7;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+  min-width: 130px;
+  justify-content: center;
+}
+
+.action-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.action-button.loading {
+  position: relative;
+}
+
+.button-loader {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.print-button {
+  background-color: #4299e1;
+  color: white;
+}
+
+.print-button:hover {
+  background-color: #3182ce;
+}
+
+.export-button {
+  background-color: #38a169;
+  color: white;
+}
+
+.export-button:hover {
+  background-color: #2f855a;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .patient-info-section {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .patient-avatar {
+    margin-right: 0;
+    margin-bottom: 15px;
+  }
+  
+  .examination-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-bar {
+    max-width: none;
+  }
+  
+  .filter-controls {
+    justify-content: space-between;
+  }
+  
+  .summary-stats {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .stat-item {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 10px 15px;
+  }
+  
+  .stat-value {
+    margin-bottom: 0;
+  }
+  
+  .stat-label {
+    margin-top: 0;
+    text-align: right;
+  }
+}
+
+@media (max-width: 480px) {
+  .filter-controls {
+    flex-direction: column;
+  }
+  
+  .filter-group {
+    width: 100%;
+  }
+  
+  .filter-group select {
+    flex: 1;
+  }
+}
+
+/* Help Button and Overlay */
+.help-button {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 50px;
+  height: 50px;
+  background-color: #4299e1;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-size: 24px;
+  transition: all 0.3s ease;
+  z-index: 100;
+}
+
+.help-button:hover {
+  background-color: #3182ce;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Scroll to Top Button */
+.scroll-top-button {
+  position: fixed;
+  bottom: 30px;
+  right: 90px;
+  width: 50px;
+  height: 50px;
+  background-color: #38a169;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-size: 24px;
+  transition: all 0.3s ease;
+  z-index: 100;
+  animation: fade-in 0.3s ease;
+}
+
+.scroll-top-button:hover {
+  background-color: #2f855a;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.help-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.help-content {
+  background-color: white;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  animation: slide-up 0.3s ease;
+}
+
+@keyframes slide-up {
+  from { transform: translateY(50px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.help-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid #edf2f7;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f8fafc;
+}
+
+.help-header h2 {
+  margin: 0;
+  color: #2d3748;
+  font-size: 1.5rem;
+}
+
+.close-help {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #a0aec0;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.close-help:hover {
+  color: #4a5568;
+}
+
+.help-body {
+  padding: 20px;
+  overflow-y: auto;
+  max-height: calc(80vh - 60px);
+}
+
+.help-body h3 {
+  color: #3182ce;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  font-size: 1.2rem;
+}
+
+.help-body p {
+  color: #4a5568;
+  line-height: 1.6;
+  margin-bottom: 15px;
+}
+
+.help-body ul {
+  padding-left: 20px;
+  margin-bottom: 15px;
+}
+
+.help-body li {
+  margin-bottom: 8px;
+  color: #4a5568;
+}
+
+.help-body strong {
+  color: #2d3748;
+}

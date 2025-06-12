@@ -1,0 +1,235 @@
+/* Styling for medical history section */
+.medical-history h3 {
+  color: #1d8ea3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.history-records {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.history-record {
+  background-color: #f8fbfb;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  border-left: 4px solid #1d8ea3;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.history-record:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.history-record.selected {
+  border-left: 4px solid #e74c3c;
+  background-color: #fff9f9;
+  box-shadow: 0 4px 10px rgba(231, 76, 60, 0.15);
+}
+
+.record-header {
+  background-color: #edf6f9;
+  padding: 10px 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e1eef1;
+  position: relative;
+}
+
+.record-date {
+  font-weight: 600;
+  color: #1d8ea3;
+}
+
+.doctor-name {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.record-body {
+  padding: 15px;
+}
+
+.record-field {
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.record-field strong {
+  color: #1d8ea3;
+  font-weight: 600;
+  margin-right: 5px;
+}
+
+.prescription {
+  margin-top: 15px;
+  border-top: 1px dashed #e1eef1;
+  padding-top: 15px;
+}
+
+.prescription strong {
+  color: #1d8ea3;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.medicines-list {
+  list-style-type: none;
+  padding-left: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.medicine-item {
+  background-color: #fff;
+  border-radius: 6px;
+  padding: 10px;
+  border: 1px solid #e1eef1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.medicine-name {
+  font-weight: 600;
+  color: #333;
+  flex: 1 0 100%;
+}
+
+.medicine-dosage, .medicine-freq, .medicine-notes {
+  flex: 1 0 auto;
+  font-size: 0.9rem;
+  color: #666;
+  padding: 2px 8px;
+  background-color: #f5f9fa;
+  border-radius: 4px;
+}
+
+.reexam {
+  margin-top: 15px;
+  font-weight: 500;
+  color: #d35400;
+  padding: 8px 12px;
+  background-color: #fff3e0;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.no-history {
+  padding: 20px;
+  text-align: center;
+  color: #777;
+  font-style: italic;
+  background-color: #f8fbfb;
+  border-radius: 8px;
+}
+
+/* Card animation */
+@keyframes expandCard {
+  from {
+    max-height: 100px;
+    opacity: 0.8;
+  }
+  to {
+    max-height: 1000px;
+    opacity: 1;
+  }
+}
+
+/* Animation for selected card */
+.history-record.selected .record-body {
+  animation: expandCard 0.3s ease-out forwards;
+}
+
+/* Hide record body by default for mobile */
+@media (max-width: 768px) {
+  .history-record:not(.selected) .record-body {
+    display: none;
+  }
+}
+
+/* Enhanced card style when selected */
+.history-record.selected .record-header {
+  background-color: #fef2f2;
+  border-bottom: 1px solid #fde8e8;
+}
+
+.history-record.selected .record-date {
+  color: #e53e3e;
+}
+
+/* Add expand/collapse indicator */
+.record-header::after {
+  content: "↓";
+  position: absolute;
+  right: 15px;
+  transition: transform 0.3s ease;
+  color: #1d8ea3;
+}
+
+.history-record.selected .record-header::after {
+  transform: rotate(180deg);
+  color: #e53e3e;
+}
+
+/* Responsive design */
+@media (max-width: 600px) {
+  .record-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+  
+  .medicine-item {
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .medicine-dosage, .medicine-freq, .medicine-notes {
+    flex: 1 0 100%;
+  }
+}
+
+/* Style for action buttons */
+.examination-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 15px;
+}
+
+.action-button {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s;
+}
+
+.print-button {
+  background-color: #f1f7ff;
+  border-color: #cde0ff;
+  color: #2563eb;
+}
+
+.print-button:hover {
+  background-color: #e0edff;
+  border-color: #93c5fd;
+}
+
+.action-button svg {
+  font-size: 1rem;
+}

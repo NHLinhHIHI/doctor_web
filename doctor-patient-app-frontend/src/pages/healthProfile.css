@@ -1,0 +1,43 @@
+/* Styling for the health profile section */
+.health-profile-display {
+  background-color: #f5fbfa;
+  border-left: 4px solid #1ea5c6;
+}
+
+.health-profile-display h3 {
+  color: #1ea5c6;
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+}
+
+.health-profile-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.health-profile-fields p {
+  margin: 0;
+  padding: 8px 12px;
+  background-color: #ffffff;
+  border-radius: 6px;
+  border-left: 2px solid #e0e7e7;
+}
+
+.health-profile-fields p strong {
+  color: #1ea5c6;
+  margin-right: 5px;
+}
+
+.health-profile-fields p.full-width {
+  grid-column: 1 / -1;
+  border-left: 3px solid #1ea5c6;
+  font-style: italic;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .health-profile-fields {
+    grid-template-columns: 1fr;
+  }
+}

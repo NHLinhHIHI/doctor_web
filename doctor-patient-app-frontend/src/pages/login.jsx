@@ -16,24 +16,64 @@ function Login() {
         body: JSON.stringify({ email, password }),
       });
 
+      if (!res.ok) {
+        throw new Error("Sai email hoặc mật khẩu!");
+      }
+
       const data = await res.json();
+       
+      if (!data.user) {
+        throw new Error("Dữ liệu trả về không hợp lệ!");
+      }
       alert(`Welcome, role: ${data.user.role}`);
+      
 
       // ✅ Lưu thông tin user vào localStorage
       localStorage.setItem("user", JSON.stringify(data.user));
+console.log("Lưu vào localStorage:", localStorage.getItem("user"));
 
       // ✅ Điều hướng
       if (data.user.role === "admin") {
   window.location.href = "/admin";
 } else if (data.user.role === "doctor") {
+  // ✅ Gọi API profile kèm email query
+  const profileRes = await fetch(
+    `http://localhost:5000/api/doctor/profile?email=${encodeURIComponent(data.user.email)}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        // Nếu có token:
+        // "Authorization": `Bearer ${data.token}`
+      },
+    }
+  );
+
+  if (!profileRes.ok) throw new Error("Không lấy được profile doctor");
+
+  const profile = await profileRes.json();
+
+  // ✅ Gộp thông tin user và profile
+  const fullDoctorInfo = {
+    ...data.user,
+    ...profile,
+  };
+
+  // ✅ Lưu vào localStorage
+  localStorage.setItem("user", JSON.stringify(fullDoctorInfo));
+
+  // ✅ Chuyển trang
   window.location.href = "/doctor";
-} else {
+}
+
+ else {
   alert("Bạn không có quyền truy cập.");
 }
-    } catch (err) {
-      alert("Đăng nhập thất bại!");
-    }
-  };
+} catch (err) {
+console.error(err);
+alert("Đăng nhập thất bại!");
+}
+  };  
 
   // Hàm đăng nhập nhanh với role doctor
   const handleQuickDoctorLogin = () => {
