@@ -4,9 +4,20 @@ import AddDoctorForm from "./AddDoctorForm";
 import NotificationCardList from "./NotificationCardList";
 import AdminSchedule from "./AdminSchedule";
 import MedicineList from "./MedicineList";
+import PatientManager from "./PatientManager";
+import PatientDetail2 from "./PatientDetail2";
+
 function AdminDashboard() {
   const user = JSON.parse(localStorage.getItem("user"));
   const [activeView, setActiveView] = useState("dashboard");
+
+  // 🔧 THÊM 2 cái này:
+  const [selectedPatientId, setSelectedPatientId] = useState(null);
+
+  const handleViewPatientDetail = (patientId) => {
+    setSelectedPatientId(patientId);
+    setActiveView("PatientDetail2");
+  };
 
   if (!user || user.role !== "admin") {
     return <h2>Access denied. Admin only!</h2>;
@@ -16,14 +27,18 @@ function AdminDashboard() {
     switch (activeView) {
       case "add-doctor":
         return <AddDoctorForm />;
-        case "notifications":
-      return <NotificationCardList />;
+      case "notifications":
+        return <NotificationCardList />;
       case "schedule":
-      return <AdminSchedule />;
+        return <AdminSchedule />;
       case "Medicine":
-      return <MedicineList />;
+        return <MedicineList />;
+      case "PatientDetail2":
+        return <PatientDetail2 patientId={selectedPatientId} />;
       default:
-          return <h2>Hello Admin</h2>;
+        return (
+          <PatientManager onViewDetail={handleViewPatientDetail} />
+        );
     }
   };
 
@@ -46,35 +61,34 @@ function AdminDashboard() {
 
       <div className="main">
         <aside className="sidebar">
-  <h3>Navigation</h3>
-  <ul>
-    <li
-      className={activeView === "dashboard" ? "active" : ""}
-      onClick={() => setActiveView("dashboard")}
-    >
-      Manager
-    </li>
-    <li
-      className={activeView === "add-doctor" ? "active" : ""}
-      onClick={() => setActiveView("add-doctor")}
-    >
-      Add Doctor
-    </li>
-    <li
-      className={activeView === "schedule" ? "active" : ""}
-      onClick={() => setActiveView("schedule")}
-    >
-      Schedule
-    </li>
-    <li
-      className={activeView === "Medicine" ? "active" : ""}
-      onClick={() => setActiveView("Medicine")}
-    >
-      Medicine Manager
-    </li>
-  </ul>
-</aside>
-
+          <h3>Navigation</h3>
+          <ul>
+            <li
+              className={activeView === "dashboard" ? "active" : ""}
+              onClick={() => setActiveView("dashboard")}
+            >
+              History
+            </li>
+            <li
+              className={activeView === "add-doctor" ? "active" : ""}
+              onClick={() => setActiveView("add-doctor")}
+            >
+              Add Doctor
+            </li>
+            <li
+              className={activeView === "schedule" ? "active" : ""}
+              onClick={() => setActiveView("schedule")}
+            >
+              Schedule
+            </li>
+            <li
+              className={activeView === "Medicine" ? "active" : ""}
+              onClick={() => setActiveView("Medicine")}
+            >
+              Medicine Manager
+            </li>
+          </ul>
+        </aside>
 
         <section className="content">{renderContent()}</section>
       </div>

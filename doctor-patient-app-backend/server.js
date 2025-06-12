@@ -15,8 +15,11 @@ const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/user");
 const notificationRoutes = require("./routes/notifications");
 const medicineRoutes = require("./routes/medicine");
+const manager = require("./routes/manager");
+const chat = require("./routes/chat");
 //Tạm thời comment route auth để tắt xác thực
 app.use("/auth", authRoutes);
+app.use("/manager", manager);
 app.use("/medicine", medicineRoutes);
 app.use("/user", userRoutes);
 app.use("/doctor", doctorRoutes); // thêm dòng này
@@ -24,6 +27,7 @@ app.use("/api/doctor", doctorRoutes);
 app.use("/notifications", notificationRoutes); 
 //app.use("/api", notificationRoutes);
 app.use("/schedule", scheduleRoutes);
+app.use("/chat", chat);
 app.use("/schedule2", scheduleRoutes2);
 app.get("/", (req, res) => {
   res.send("Doctor-Patient API is running...");
