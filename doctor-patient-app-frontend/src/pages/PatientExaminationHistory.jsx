@@ -1,22 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaFilter, FaSearch, FaCalendarAlt, FaPrint, FaDownload, FaInfoCircle, FaTimes, FaArrowUp } from 'react-icons/fa';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { FaArrowLeft, FaFilter, FaSearch, FaCalendarAlt, FaPrint, FaDownload, FaInfoCircle, FaTimes, FaArrowUp, FaPills, FaClipboardList } from 'react-icons/fa';
 import './patientExaminationHistory.css';
 
 const PatientExaminationHistory = () => {
   const { patientId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [patient, setPatient] = useState(null);
   const [examinations, setExaminations] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('all');
-  const [sortOrder, setSortOrder] = useState('desc'); // desc: mới nhất trước, asc: cũ nhất trước
-  const [selectedExam, setSelectedExam] = useState(null);  const [processingAction, setProcessingAction] = useState(false);
+  const [filterType, setFilterType] = useState('all');  const [sortOrder, setSortOrder] = useState('desc'); // desc: mới nhất trước, asc: cũ nhất trước
+  const [selectedExam, setSelectedExam] = useState(null);  
+  const [processingAction, setProcessingAction] = useState(false);
   const [actionType, setActionType] = useState('');
   const [showHelp, setShowHelp] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [viewMode, setViewMode] = useState('examinations'); // 'examinations' or 'prescriptions'
+  const [showMedicationsForExam, setShowMedicationsForExam] = useState(null); // Store examination ID for which medications should be shown
 
   // Xử lý hiển thị nút scroll to top
   useEffect(() => {
@@ -31,7 +34,6 @@ const PatientExaminationHistory = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
   // Scroll to top
   const scrollToTop = () => {
     window.scrollTo({
@@ -63,6 +65,17 @@ const PatientExaminationHistory = () => {
   }
 };
 
+
+  // Check URL parameters for view mode
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const view = searchParams.get('view');
+    if (view === 'prescriptions') {
+      setViewMode('prescriptions');
+    } else {
+      setViewMode('examinations');
+    }
+  }, [location.search]);
 
   useEffect(() => {
     const fetchPatientData = async () => {
@@ -113,6 +126,21 @@ const PatientExaminationHistory = () => {
       fetchPatientData();
     }
   }, [patientId]);
+  // Toggle view mode function
+  const toggleViewMode = (mode) => {
+    setViewMode(mode);
+    // Update URL without reloading the page
+    const searchParams = new URLSearchParams(location.search);
+    if (mode === 'prescriptions') {
+      searchParams.set('view', 'prescriptions');
+    } else {
+      searchParams.delete('view');
+    }
+    navigate({
+      pathname: location.pathname,
+      search: searchParams.toString()
+    }, { replace: true });
+  };
 
   // Phân loại loại khám bệnh
   const getExaminationType = (examination) => {
@@ -279,8 +307,7 @@ const PatientExaminationHistory = () => {
             ${exam.reExamDate ? `<p><strong>Ngày tái khám:</strong> ${formatDate(exam.reExamDate)}</p>` : ''}
             
           </div>
-          
-          ${exam.prescriptions && exam.prescriptions.length > 0 ? `
+            ${exam.medications && exam.medications.length > 0 ? `
             <div class="prescription">
               <h2>Đơn thuốc</h2>
               <table>
@@ -288,14 +315,16 @@ const PatientExaminationHistory = () => {
                   <th>Tên thuốc</th>
                   <th>Liều dùng</th>
                   <th>Tần suất</th>
+                  <th>Số lượng</th>
                   <th>Ghi chú</th>
                 </tr>
-                ${exam.prescriptions.map(med => `
+                ${exam.medications.map(med => `
                   <tr>
                     <td>${med.medicineName || ''}</td>
                     <td>${med.dosage || ''}</td>
                     <td>${med.frequency || ''}</td>
-                    <td>${med.notes || ''}</td>
+                    <td>${med.quantity || ''}</td>
+                    <td>${med.usageNotes || ''}</td>
                   </tr>
                 `).join('')}
               </table>
@@ -376,12 +405,17 @@ const PatientExaminationHistory = () => {
     setSelectedExam(selectedExam?.id === exam.id ? null : exam);
   };
 
-  return (    <div className="patient-examination-history">
-      <div className="history-header">
+  // Handle showing medications for an examination
+  const handleShowMedications = (examId) => {
+    setShowMedicationsForExam(showMedicationsForExam === examId ? null : examId);
+  };
+
+  return (    <div className="patient-examination-history">      <div className="history-header">
         <button className="back-button" onClick={handleBackNavigation}>
           <FaArrowLeft /> Quay lại
-        </button>
-        <h1>Lịch Sử Khám Bệnh</h1>
+        </button>        <div className="header-content">
+          <h1>Lịch Sử Khám Bệnh</h1>
+        </div>
       </div>
       
       {loading ? (
@@ -412,29 +446,26 @@ const PatientExaminationHistory = () => {
           
           <div className="examination-controls">
             <div className="search-bar">
-              <FaSearch className="search-icon" />
-              <input 
+              <FaSearch className="search-icon" />              <input 
                 type="text" 
                 placeholder="Tìm kiếm trong lịch sử khám bệnh..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-            </div>
-            
-            <div className="filter-controls">
-              <div className="filter-group">
-                <label>Loại khám:</label>
-                <select 
-                  value={filterType}
-                  onChange={(e) => setFilterType(e.target.value)}
-                >
-                  <option value="all">Tất cả</option>
-                  <option value="general">Khám thường</option>
-                  <option value="specialist">Khám chuyên khoa</option>
-                  <option value="emergency">Cấp cứu</option>
-                  <option value="follow-up">Tái khám</option>
-                </select>
-              </div>
+            </div>              <div className="filter-controls">
+                <div className="filter-group">
+                  <label>Loại khám:</label>
+                  <select 
+                    value={filterType}
+                    onChange={(e) => setFilterType(e.target.value)}
+                  >
+                    <option value="all">Tất cả</option>
+                    <option value="general">Khám thường</option>
+                    <option value="specialist">Khám chuyên khoa</option>
+                    <option value="emergency">Cấp cứu</option>
+                    <option value="follow-up">Tái khám</option>
+                  </select>
+                </div>
               
               <div className="filter-group">
                 <label>Sắp xếp:</label>
@@ -461,8 +492,7 @@ const PatientExaminationHistory = () => {
                 setFilterType('all');
               }}>Xóa bộ lọc</button>
             </div>
-          ) : (
-            <div className="examination-history-list">
+          ) : (            <div className="examination-history-list">
               <div className="summary-stats">
                 <div className="stat-item">
                   <span className="stat-value">{examinations.length}</span>
@@ -492,6 +522,12 @@ const PatientExaminationHistory = () => {
                   </span>
                   <span className="stat-label">Có hẹn tái khám</span>
                 </div>
+                <div className="stat-item">
+                  <span className="stat-value">
+                    {examinations.filter(exam => exam.medications && exam.medications.length > 0).length}
+                  </span>
+                  <span className="stat-label">Lần khám có đơn thuốc</span>
+                </div>
               </div>
               
               {groupedExaminations().map(group => (
@@ -510,15 +546,27 @@ const PatientExaminationHistory = () => {
                           key={exam.id} 
                           className={`examination-card ${examType.type} ${selectedExam?.id === exam.id ? 'selected' : ''} ${isNewest ? 'newest' : ''}`}
                           onClick={() => handleExamClick(exam)}
-                        >
-                          <div className="exam-header">
+                        >                          <div className="exam-header">
                             <div className="exam-date">
                               <span className="date-value">{formatDateTime(exam.examinationDate)}</span>
                               <span className={`exam-type ${examType.type}`}>{examType.label}</span>
                             </div>
-                            <div className="doctor-info">
-                              Bác sĩ: {exam.doctorName || 'Không có thông tin'}
-                              {exam.doctorSpecialty && ` (${exam.doctorSpecialty})`}
+                            <div className="doctor-info-container">
+                              <div className="doctor-info">
+                                Bác sĩ: {exam.doctorName || 'Không có thông tin'}
+                                {exam.doctorSpecialty && ` (${exam.doctorSpecialty})`}
+                              </div>
+                              {exam.medications && exam.medications.length > 0 && (
+                                <button 
+                                  className="prescription-button" 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleShowMedications(exam.id);
+                                  }}
+                                >
+                                  <FaPills /> Đơn thuốc
+                                </button>
+                              )}
                             </div>
                           </div>
                           
@@ -535,17 +583,17 @@ const PatientExaminationHistory = () => {
                               <span className="label">Ghi chú:</span>
                               <span className="value">{exam.notes || 'Không có'}</span>
                             </div>
-                            
-                            {exam.prescriptions && exam.prescriptions.length > 0 && (
+                              {showMedicationsForExam === exam.id && exam.medications && exam.medications.length > 0 && (
                               <div className="medications">
                                 <div className="medications-header">Đơn thuốc:</div>
                                 <ul className="medications-list">
-                                  {exam.prescriptions.map((med, idx) => (
+                                  {exam.medications.map((med, idx) => (
                                     <li key={idx} className="medication-item">
                                       <div className="med-name">{med.medicineName}</div>
                                       {med.dosage && <div className="med-dosage">Liều dùng: {med.dosage}</div>}
                                       {med.frequency && <div className="med-frequency">Tần suất: {med.frequency}</div>}
-                                      {med.notes && <div className="med-notes">Ghi chú: {med.notes}</div>}
+                                      {med.quantity && <div className="med-quantity">Số lượng: {med.quantity}</div>}
+                                      {med.usageNotes && <div className="med-notes">Ghi chú: {med.usageNotes}</div>}
                                     </li>
                                   ))}
                                 </ul>

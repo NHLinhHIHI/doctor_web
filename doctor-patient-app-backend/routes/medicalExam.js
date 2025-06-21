@@ -270,6 +270,7 @@ router.get('/waiting-patients', async (req, res) => {
     });
   }
 });
+
 // POST - Lưu thông tin khám bệnh và đơn thuốc
 router.post('/', async (req, res) => {
   try {

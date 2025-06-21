@@ -30,6 +30,7 @@
   gap: 8px;
   background-color: #f1f1f1;
   border: none;
+  width: 120px;
   padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
@@ -427,8 +428,8 @@
 
 .medications {
   margin-top: 15px;
-  padding-top: 15px;
-  border-top: 1px dashed #e2e8f0;
+  border-top: 1px dashed #ddd;
+  padding-top: 10px;
 }
 
 .medications-header {
@@ -539,6 +540,43 @@
   background-color: #2f855a;
 }
 
+/* Header content with view toggle buttons */
+.header-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.view-toggle-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.view-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 20px;
+  background-color: #f0f0f0;
+  color: #555;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.view-toggle-btn:hover {
+  background-color: #e0e0e0;
+}
+
+.view-toggle-btn.active {
+  background-color: #1bb9b7;
+  color: white;
+}
+
 /* Responsive styles */
 @media (max-width: 768px) {
   .patient-info-section {
@@ -583,6 +621,25 @@
   .stat-label {
     margin-top: 0;
     text-align: right;
+  }
+  
+  .history-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .back-button {
+    margin-bottom: 15px;
+  }
+  
+  .view-toggle-buttons {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .view-toggle-btn {
+    flex: 1;
+    justify-content: center;
   }
 }
 
@@ -746,4 +803,41 @@
 
 .help-body strong {
   color: #2d3748;
+}
+
+.doctor-info-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-top: 5px;
+}
+
+.prescription-button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  width: 100px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.prescription-button:hover {
+  background-color: #45a049;
+}
+
+.prescription-button:active {
+  transform: translateY(1px);
+}
+
+.med-quantity {
+  margin: 5px 0;
+  color: #555;
+  font-size: 0.9rem;
 }

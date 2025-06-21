@@ -27,7 +27,6 @@ function App() {
         <Route path="/patient/:patientId" element={<PatientDetail />} />
         <Route path="/medical-exam/:appointmentId" element={<MedicalExam />} />
         <Route path="/examination-history/:patientId" element={<PatientExaminationHistory />} />
-        {/* Add more routes as needed */}
         <Route path="/patient2/:patientId" element={<PatientDetail2 />} />
       </Routes>
     </Router>

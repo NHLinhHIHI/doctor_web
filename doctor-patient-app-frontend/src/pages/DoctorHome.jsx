@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./doctor.css";
-import { FaSearch, FaSignOutAlt, FaUserPlus, FaSyncAlt, FaFilter, FaHistory } from "react-icons/fa";
+import { FaSearch, FaSignOutAlt, FaUserPlus, FaSyncAlt, FaFilter, FaHistory, FaMedkit, FaPills } from "react-icons/fa";
 import DoctorSchedule from "./DoctorSchedule";
 import MedicalExam from "./MedicalExam";
 import Chat from "./chat";
@@ -478,8 +478,7 @@ function DoctorHome() {
               </div>
             ) : (
               <>
-                <div className="patient-cards">
-                  {filteredPatients.length > 0 ? (
+                <div className="patient-cards">                  {filteredPatients.length > 0 ? (
                     filteredPatients.map(patient => (
                       <div className="patient-card" key={patient.id}>
                         <div className="card-header">
@@ -487,34 +486,47 @@ function DoctorHome() {
                             src={patient.profileImage || "/images/avatar.png"} 
                             alt={patient.patientInfo?.name || patient.name || "Patient"} 
                             className="patient-image"
-                          />                        <div className="patient-info">                            
+                          />
+                          <div className="patient-info">                            
                             <h3 className="patient-name">
                               {patient.ProfileNormal?.[0]
                                 || patient.patientInfo?.name
                                 || patient.name
                                 || "Không xác định"}
-                            </h3>
-
-                            <p><strong>Mã hồ sơ:</strong> {patient.id.substring(0, 8)}...</p>
-                            <p><strong>Giới tính:</strong> 
-                              {patient.ProfileNormal && Array.isArray(patient.ProfileNormal) && patient.ProfileNormal.length > 3
-                                ? patient.ProfileNormal[3] 
-                                : (patient.patientInfo?.gender || "Không xác định")}
+                            </h3>                            <p className="patient-id">
+                              <strong>Mã hồ sơ:</strong> 
+                              <span>{patient.id ? `${patient.id.substring(0, 6)}...` : "N/A"}</span>
                             </p>
-                            <p><strong>Ngày sinh:</strong> 
-                              {patient.ProfileNormal && Array.isArray(patient.ProfileNormal) && patient.ProfileNormal.length > 1
-                                ? patient.ProfileNormal[1] 
-                                : (patient.patientInfo?.birthDate || "Không xác định")}
-                            </p>                            <p><strong>SĐT:</strong> 
-                              {patient.ProfileNormal && Array.isArray(patient.ProfileNormal) && patient.ProfileNormal.length > 2
-                                ? patient.ProfileNormal[2] 
-                                : (patient.patientInfo?.phone || patient.phone || "Không xác định")}
+                            <p>
+                              <strong>Giới tính:</strong> 
+                              <span>
+                                {patient.ProfileNormal && Array.isArray(patient.ProfileNormal) && patient.ProfileNormal.length > 3
+                                  ? patient.ProfileNormal[3] 
+                                  : (patient.patientInfo?.gender || "Không xác định")}
+                              </span>
+                            </p>
+                            <p>
+                              <strong>Ngày sinh:</strong> 
+                              <span>
+                                {patient.ProfileNormal && Array.isArray(patient.ProfileNormal) && patient.ProfileNormal.length > 1
+                                  ? patient.ProfileNormal[1] 
+                                  : (patient.patientInfo?.birthDate || "Không xác định")}
+                              </span>
+                            </p>
+                            <p>
+                              <strong>SĐT:</strong> 
+                              <span>
+                                {patient.ProfileNormal && Array.isArray(patient.ProfileNormal) && patient.ProfileNormal.length > 2
+                                  ? patient.ProfileNormal[2] 
+                                  : (patient.patientInfo?.phone || patient.phone || "Không xác định")}
+                              </span>
                             </p>
                           </div>
                         </div>                        <div className="card-actions">
                           <button
                             className="history-button tertiary"
                             onClick={() => navigate(`/examination-history/${patient.id}`)}
+                            title="Xem lịch sử khám bệnh"
                           >
                             <FaHistory /> Lịch Sử Khám
                           </button>
