@@ -412,7 +412,7 @@
 /* Patient Cards */
 .patient-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 25px;
   margin-top: 20px;
 }
@@ -429,6 +429,7 @@
   border-left: 5px solid #1bb9b7;
   overflow: hidden;
   position: relative;
+  height: 100%;
 }
 
 .patient-card::before {
@@ -448,19 +449,25 @@
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
-.card-header {  display: flex;
+.card-header {
+  display: flex;
   gap: 15px;
   margin-bottom: 15px;
+  align-items: flex-start;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
 }
 
 .card-header .patient-image {
-  width: 90px;
-  height: 90px;
+  width: 85px;
+  height: 85px;
   border-radius: 50%;
   object-fit: cover;
   border: 3px solid #e8f4f4;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease;
+  margin-bottom: 10px;
 }
 
 .patient-card:hover .patient-image {
@@ -469,35 +476,71 @@
 
 .patient-info {
   flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  width: 100%;
+  padding: 0 5px;
 }
 
 .patient-info .patient-name {
   margin: 0 0 10px 0;
   color: #0f8483;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 17px;
+  line-height: 1.3;
+  font-weight: 700;
   border-bottom: 1px solid #e8f4f4;
   padding-bottom: 8px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .patient-info p {
-  margin: 6px 0;
-  font-size: 14px;
-  line-height: 1.5;
+  margin: 8px 0;
   display: flex;
+  justify-content: flex-start;
   align-items: center;
 }
 
-.patient-info strong {
-  color: #1bb9b7;
-  display: inline-block;
-  width: 120px;
-  font-weight: 600;
+.patient-info p:not(.patient-id) {
+  display: flex;
+  flex-wrap: wrap;
 }
 
-.patient-info .next-appointment {
-  color: #e74c3c;
-  font-weight: 500;
+.patient-info p:not(.patient-id) strong {
+  margin-right: 8px;
+}
+
+.patient-info p:not(.patient-id) span {
+  display: inline-block;
+}
+
+.patient-info strong {
+  color: #333;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-block;
+  width: 110px;
+  font-weight: 600;
+  margin-right: 5px;
+  flex-shrink: 0;
+}
+
+.patient-info span {
+  flex: 1;
+  word-wrap: break-word;
+}
+
+/* Special handling for patient ID - keep it truncated */
+.patient-info p.patient-id span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .card-actions {
@@ -505,10 +548,14 @@
   justify-content: center;
   margin-top: 15px;
   flex-wrap: wrap;
+  padding-top: 15px;
+  margin-top: auto;
+  border-top: 1px solid #f0f0f0;
+  gap: 10px;
 }
 
 .history-button {
-  padding: 12px 20px;
+  padding: 10px 15px;
   border: none;
   border-radius: 30px;
   cursor: pointer;
@@ -517,17 +564,26 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   transition: all 0.3s ease;
-  width: 100%;
-  max-width: 280px;
+  flex: 1;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  min-width: 120px;
 }
 
 .history-button.tertiary {
   background: linear-gradient(135deg, #e8f4f4 0%, #d6efef 100%);
   color: #0f8483;
-  font-size: 15px;
+  font-size: 14px;
+  letter-spacing: 0.3px;
+  position: relative;
+  overflow: hidden;
+}
+
+.history-button.prescription {
+  background: linear-gradient(135deg, #f0f8ff 0%, #e1effe 100%);
+  color: #1976d2;
+  font-size: 14px;
   letter-spacing: 0.3px;
   position: relative;
   overflow: hidden;
@@ -551,42 +607,10 @@
   box-shadow: 0 5px 15px rgba(15, 132, 131, 0.2);
 }
 
-.history-button.tertiary:hover::before {
-  transform: translateX(100%);
-}
-
-.no-results {
-  text-align: center;
-  padding: 40px 30px;
-  color: #777;
-  grid-column: 1 / -1;
-  background-color: white;
-  border-radius: 16px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.06);
-  border-left: 5px solid #f2994a;
-}
-
-.no-results p {
-  font-size: 16px;
-  margin-bottom: 20px;
-  color: #666;
-}
-
-.no-results button {
-  background: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 30px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  box-shadow: 0 3px 10px rgba(242, 153, 74, 0.2);
-}
-
-.no-results button:hover {
+.history-button.prescription:hover {
+  background: linear-gradient(135deg, #e1effe 0%, #cfe7fd 100%);
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(242, 153, 74, 0.3);
+  box-shadow: 0 5px 15px rgba(25, 118, 210, 0.2);
 }
 
 /* Loading */
@@ -1055,6 +1079,32 @@ input[type="file"] {
   .form-group {
     min-width: auto;
   }
+  
+  .patient-cards {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 15px;
+  }
+  
+  .patient-card {
+    padding: 15px;
+  }
+  
+  .card-header {
+    align-items: center;
+  }
+  
+  .card-header .patient-image {
+    width: 70px;
+    height: 70px;
+  }
+  
+  .patient-info strong {
+    width: 100px;
+  }
+  
+  .doctor-profile {
+    flex-direction: column;
+  }
 }
 
 /* Responsive styles */
@@ -1086,29 +1136,190 @@ input[type="file"] {
     width: 100%;
     margin-top: 15px;
   }
-    .patient-cards {
-    grid-template-columns: 1fr;
+}
+
+/* Responsive adjustments for patient cards */
+@media (max-width: 768px) {
+  .patient-cards {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 15px;
   }
   
-  .patient-card {
-    padding: 15px;
-  }
-  
   .card-header {
+    flex-direction: column;
     align-items: center;
+    text-align: center;
   }
   
   .card-header .patient-image {
-    width: 70px;
-    height: 70px;
+    margin-bottom: 10px;
   }
   
   .patient-info strong {
-    width: 100px;
+    width: auto;
+    margin-right: 5px;
   }
   
-  .doctor-profile {
-    flex-direction: column;
+  .patient-info p {
+    justify-content: center;
+  }
+}
+
+/* Patient card status indicators */
+.patient-card {
+  position: relative;
+}
+
+.patient-status {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  z-index: 1;
+}
+
+.status-active {
+  background-color: rgba(39, 174, 96, 0.1);
+  color: #27ae60;
+  border: 1px solid rgba(39, 174, 96, 0.2);
+}
+
+.status-inactive {
+  background-color: rgba(242, 153, 74, 0.1);
+  color: #f2994a;
+  border: 1px solid rgba(242, 153, 74, 0.2);
+}
+
+/* Improve card hover state */
+.patient-card {
+  border-bottom: 3px solid transparent;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-bottom-color 0.3s ease;
+}
+
+.patient-card:hover {
+  border-bottom-color: #1bb9b7;
+}
+
+/* Patient card improvements */
+.patient-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-header {
+  flex: 1;
+}
+
+.patient-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  height: 100%;
+  width: 100%;
+}
+
+.patient-info p {
+  margin: 6px 0;
+  padding: 2px 0;
+}
+
+/* Add visual separator between info and action */
+.card-actions {
+  padding-top: 15px;
+  margin-top: auto;
+  border-top: 1px solid #f0f0f0;
+}
+
+/* Improve text readability */
+.patient-info .patient-name {
+  font-size: 17px;
+  line-height: 1.3;
+  color: #0f8483;
+  font-weight: 700;
+}
+
+.patient-info p {
+  color: #555;
+}
+
+.patient-info strong {
+  color: #333;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Add subtle background patterns for visual interest */
+.patient-card:nth-child(3n+1) {
+  background-image: linear-gradient(135deg, rgba(27, 185, 183, 0.03) 25%, transparent 25%),
+                    linear-gradient(225deg, rgba(27, 185, 183, 0.03) 25%, transparent 25%),
+                    linear-gradient(45deg, rgba(27, 185, 183, 0.03) 25%, transparent 25%),
+                    linear-gradient(315deg, rgba(27, 185, 183, 0.03) 25%, #ffffff 25%);
+  background-position: 24px 0, 24px 0, 0 0, 0 0;
+  background-size: 48px 48px;
+  background-repeat: repeat;
+}
+
+.patient-card:nth-child(3n+2) {
+  background-image: radial-gradient(circle at 50% 50%, rgba(27, 185, 183, 0.02) 0%, rgba(27, 185, 183, 0.02) 25%, transparent 25%, transparent 100%);
+  background-size: 20px 20px;
+}
+
+.patient-card:nth-child(3n+3) {
+  background-image: linear-gradient(90deg, rgba(27, 185, 183, 0.03) 0px, rgba(27, 185, 183, 0.03) 1px, transparent 1px, transparent 30px);
+  background-size: 31px 31px;
+}
+
+/* Improved patient card layout for better information display */
+.card-header .patient-image {
+  width: 85px;
+  height: 85px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #e8f4f4;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+  margin-bottom: 10px;
+}
+
+.patient-info {
+  width: 100%;
+  padding: 0 5px;
+}
+
+.patient-info p {
+  margin: 8px 0;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+/* Text alignment for the patient info */
+.patient-info p:not(.patient-id) {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.patient-info p:not(.patient-id) strong {
+  margin-right: 8px;
+}
+
+.patient-info p:not(.patient-id) span {
+  display: inline-block;
+}
+
+/* Media queries for responsive layout */
+@media (max-width: 768px) {
+  .patient-info p {
+    justify-content: flex-start;
+    text-align: left;
+  }
+  
+  .patient-info .patient-name {
+    text-align: center;
   }
 }
