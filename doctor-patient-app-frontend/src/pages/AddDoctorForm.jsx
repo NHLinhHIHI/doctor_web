@@ -1,12 +1,11 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import "./addDoctorForm.css";
 
-import "./addDoctorForm.css"; // Tạo file CSS riêng cho form
 function AddDoctorForm() {
   const [formData, setFormData] = useState({
     email: "",
-    
     password: "",
     fullName: "",
     phone: "",
@@ -17,7 +16,21 @@ function AddDoctorForm() {
     note: "",
     CCCD: "",
   });
+
   const navigate = useNavigate();
+
+  const labels = {
+    email: "Email",
+    password: "Mật khẩu",
+    fullName: "Họ và tên",
+    phone: "Số điện thoại",
+    address: "Địa chỉ",
+    specialty: "Chuyên khoa",
+    birthDate: "Ngày sinh",
+    experience: "Kinh nghiệm (năm)",
+    note: "Ghi chú",
+    CCCD: "CCCD/CMND",
+  };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -27,22 +40,19 @@ function AddDoctorForm() {
     e.preventDefault();
     try {
       await axios.post("http://localhost:5000/doctor/create-doctor", formData);
-      alert("Doctor created successfully!");
+      alert("Tạo bác sĩ thành công!");
       navigate("/admin");
     } catch (err) {
-      alert("Error: " + err.message);
+      alert("Lỗi: " + err.message);
     }
   };
 
   return (
     <form onSubmit={handleSubmit}>
-      <h2>Create Doctor</h2>
-      {[
-        "email", "password", "fullName", "phone", "address", "specialty",
-        "birthDate", "experience", "note", "CCCD"
-      ].map((field) => (
-        <div key={field}>
-          <label>{field}</label>
+      <h2>Thêm bác sĩ mới</h2>
+      {Object.keys(formData).map((field) => (
+        <div key={field} className="form-group">
+          <label>{labels[field]}</label>
           <input
             name={field}
             type={field === "password" ? "password" : "text"}
@@ -52,7 +62,7 @@ function AddDoctorForm() {
           />
         </div>
       ))}
-      <button type="submit">Create</button>
+      <button type="submit">Tạo</button>
     </form>
   );
 }

@@ -21,11 +21,16 @@ form {
   }
   
   label {
-    font-weight: 500;
-    margin-bottom: 6px;
+   display: block;
+  margin-bottom: 0.3rem;
+  font-weight: bold;
   }
   
-  input,
+  input {
+  width: 100%;
+  padding: 0.5rem;
+  box-sizing: border-box;
+}
   textarea {
     padding: 12px;
     border: 1px solid #ccc;
@@ -39,7 +44,9 @@ form {
   textarea:focus {
     border-color: teal;
   }
-  
+  .form-group {
+  margin-bottom: 1rem;
+}
   textarea {
     border-radius: 10px;
     resize: vertical;
