@@ -15,7 +15,7 @@ const API_CONFIG = {
   ENDPOINTS: {
     MEDICAL_EXAM: '/api/medicalExam',
     WAITING_PATIENTS: '/api/medicalExam/waiting-patients',
-    SEARCH_MEDICINE: '/api/medicines',
+    SEARCH_MEDICINE: '/medicine/name-medicine',
   }
 };
 
@@ -254,6 +254,34 @@ const MedicalExam = () => {
       }
     }
   };
+  useEffect(() => {
+  const fetchMedicineSearch = async () => {
+    if (!medicineSearchTerm.trim()) {
+      setMedicineSearchResults([]);
+      return;
+    }
+
+    setIsSearchingMedicine(true);
+    try {
+      const response = await axios.get(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SEARCH_MEDICINE}`, {
+        params: { q: medicineSearchTerm }
+      });
+      setMedicineSearchResults(response.data || []);
+    } catch (error) {
+      console.error("Lỗi khi tìm kiếm thuốc:", error);
+      setMedicineSearchResults([]);
+    } finally {
+      setIsSearchingMedicine(false);
+    }
+  };
+
+  const debounceTimeout = setTimeout(() => {
+    fetchMedicineSearch();
+  }, 500); // debounce 500ms
+
+  return () => clearTimeout(debounceTimeout);
+}, [medicineSearchTerm]);
+
 
   // Fetch waiting patients list
   useEffect(() => {

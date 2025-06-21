@@ -46,7 +46,7 @@ app.use("/api/patient", patientRoutes);
 app.use("/api", patientProfileRoutes); // Lưu ý: Route này xử lý /api/patient-profile/:patientId
 app.use("/api/diagnostic", diagnosticRoutes); // Route chẩn đoán để debug vấn đề kết nối
 app.use('/api', require('./routes/user'));
-
+app.use(cors());
 // Route mặc định
 app.use("/notifications", notificationRoutes); 
 //app.use("/api", notificationRoutes);

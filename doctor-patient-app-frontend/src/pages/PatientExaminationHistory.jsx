@@ -39,6 +39,30 @@ const PatientExaminationHistory = () => {
       behavior: 'smooth'
     });
   };
+  const remindSchedule = async (exam) => {
+  try {
+    const res = await fetch('http://localhost:5000/doctor/send-reminder-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        patientID: patientId,
+        reExamDate: exam.reExamDate,
+        patientName: patient.name,
+        email: patient.email, // giả sử bạn có patient.email
+      }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert('Đã gửi nhắc lịch thành công!');
+    } else {
+      alert('Không thể gửi nhắc lịch');
+    }
+  } catch (error) {
+    console.error(error);
+    alert('Lỗi khi gửi nhắc lịch');
+  }
+};
+
 
   useEffect(() => {
     const fetchPatientData = async () => {
@@ -253,6 +277,7 @@ const PatientExaminationHistory = () => {
             <p><strong>Chẩn đoán:</strong> ${exam.diagnosis || 'Không ghi nhận'}</p>
             <p><strong>Ghi chú:</strong> ${exam.notes || 'Không có'}</p>
             ${exam.reExamDate ? `<p><strong>Ngày tái khám:</strong> ${formatDate(exam.reExamDate)}</p>` : ''}
+            
           </div>
           
           ${exam.prescriptions && exam.prescriptions.length > 0 ? `

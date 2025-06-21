@@ -11,6 +11,29 @@ const transporter = nodemailer.createTransport({
     pass: 'mfzg jvaj lkvn nmoz', // Mật khẩu ứng dụng Gmail (không phải mật khẩu thường)
   }
 });
+router.post("/send-reminder-email", async (req, res) => {
+  const { email, reExamDate, note } = req.body;
+
+  if (!email || !reExamDate || !note) {
+    return res.status(400).json({ success: false, message: "Thiếu thông tin." });
+  }
+
+  // Gửi mail (giả sử dùng nodemailer)
+  try {
+    await transporter.sendMail({
+      from: 'LINH.NH18886@sinhvien.hoasen.edu.vn',
+      to: email,
+      subject: "Nhắc lịch khám bệnh",
+      text: `Xin chào, đây là lời nhắc lịch khám vào ngày ${reExamDate}. Ghi chú từ bác sĩ: ${note}`
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Lỗi gửi mail:", error);
+    res.status(500).json({ success: false, message: "Gửi mail thất bại." });
+  }
+});
+
 // API tạo doctor mới
 router.post("/create-doctor", async (req, res) => {
   const {

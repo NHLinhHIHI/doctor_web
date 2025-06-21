@@ -27,7 +27,7 @@ function PatientDetail() {
       setLoading(true);
       
       // Gọi API thực tế để lấy thông tin bệnh nhân
-      const API_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000//';
+      const API_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/';
       const response = await fetch(`${API_URL}/api/patient/${id}`);
       const data = await response.json();
       

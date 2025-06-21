@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft, FaUserMd, FaFileMedical } from "react-icons/fa";
-import "./patientManager.css";
-
+import "./patientDetail.css";
+//import PatientDetail2 from "./PatientDetail2";
+import PatientManager from "./PatientManager";
 const PatientDetail2 = ({ patientId }) => {
   const navigate = useNavigate();
 
@@ -76,7 +77,7 @@ const PatientDetail2 = ({ patientId }) => {
   return (
     <div className="patient-detail-container">
       <div className="back-button" onClick={goBack}>
-        <FaArrowLeft /> Quay lại danh sách
+        <PatientManager /> Quay lại danh sách
       </div>
 
       <div className="patient-header">
