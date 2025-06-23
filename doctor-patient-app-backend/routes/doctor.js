@@ -4,6 +4,9 @@ const { admin, db } = require("../firebase");
 const bcrypt = require("bcrypt");
 const router = express.Router();
 const nodemailer = require("nodemailer");
+const puppeteer = require('puppeteer');
+const fs = require('fs');
+const path = require('path');
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -12,19 +15,25 @@ const transporter = nodemailer.createTransport({
   }
 });
 router.post("/send-reminder-email", async (req, res) => {
-  const { email, reExamDate, note } = req.body;
+  const { email, reExamDate,name,html } = req.body;
 
-  if (!email || !reExamDate || !note) {
+  if (!email || !reExamDate || !name) {
     return res.status(400).json({ success: false, message: "Thiếu thông tin." });
   }
 
   // Gửi mail (giả sử dùng nodemailer)
   try {
+     const dateObj = new Date(reExamDate);
+
+  // Format lại thành dạng YYYY-MM-DD
+  const formattedDate = dateObj.toISOString().split('T')[0]; // ví dụ: "2025-06-22"
     await transporter.sendMail({
       from: 'LINH.NH18886@sinhvien.hoasen.edu.vn',
-      to: email,
+      to: email,  
       subject: "Nhắc lịch khám bệnh",
-      text: `Xin chào, đây là lời nhắc lịch khám vào ngày ${reExamDate}. Ghi chú từ bác sĩ: ${note}`
+      text: `Xin chào bạn  ${name}, đây là lời nhắc lịch khám vào ngày ${formattedDate}.`,
+      html
+
     });
 
     res.json({ success: true });
@@ -33,7 +42,54 @@ router.post("/send-reminder-email", async (req, res) => {
     res.status(500).json({ success: false, message: "Gửi mail thất bại." });
   }
 });
+router.post("/send-pdf-email", async (req, res) => {
+  const { email, name, html } = req.body;
 
+  if (!email || !name || !html) {
+    return res.status(400).json({ success: false, message: "Thiếu thông tin." });
+  }
+
+  try {
+   
+
+    // Tạo file PDF từ HTML bằng Puppeteer
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+
+    const fileName = `prescription_${Date.now()}.pdf`;
+    const filePath = path.join(__dirname, '../pdfs', fileName); // tạo folder "pdfs" sẵn
+
+    await page.pdf({ path: filePath, format: 'A4' });
+    await browser.close();
+
+    // Gửi email kèm file PDF
+
+
+    await transporter.sendMail({
+      
+      from: 'LINH.NH18886@sinhvien.hoasen.edu.vn',
+      to: email,
+      subject: "Toa thuốc đính kèm",
+      text: `Xin chào ${name}, đây là toa thuốc từ Bác Sĩ bạn đã khám .`,
+      attachments: [
+        {
+          filename: 'ToaThuoc.pdf',
+          path: filePath,
+        },
+      ],
+    });
+    fs.unlink(filePath, (err) => {
+  if (err) console.error('Không thể xoá file PDF:', err);
+});
+
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Lỗi gửi mail:", error);
+    res.status(500).json({ success: false, message: "Gửi mail thất bại." });
+  }
+});
 // API tạo doctor mới
 router.post("/create-doctor", async (req, res) => {
   const {

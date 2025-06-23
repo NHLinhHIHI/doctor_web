@@ -5,9 +5,12 @@ import "./doctor.css";
 import { FaSearch, FaSignOutAlt, FaUserPlus, FaSyncAlt, FaFilter, FaHistory, FaMedkit, FaPills } from "react-icons/fa";
 import DoctorSchedule from "./DoctorSchedule";
 import MedicalExam from "./MedicalExam";
-import Chat from "./chat";
+//import Chat from "./chat";
+import { useRef } from "react";
+import ChatApp from "./ChatApp";
 
 // Auto retry component
+
 const AutoRetry = ({ onRetry }) => {
   const [countdown, setCountdown] = useState(10);
   
@@ -34,10 +37,14 @@ const AutoRetry = ({ onRetry }) => {
 };
 
 function DoctorHome() {
+  //const [activeTab, setActiveTab] = useState("Dashboard");
+const [chatInfo, setChatInfo] = useState(null); // { chatID, otherID }
+  const chatAppRef = useRef();
   const navigate = useNavigate();
   const [doctor, setDoctor] = useState(null);
   const [patients, setPatients] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");  const [activeTab, setActiveTab] = useState("Hồ Sơ");
+  const [searchTerm, setSearchTerm] = useState("");  
+  const [activeTab, setActiveTab] = useState("Hồ Sơ");
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);  const [searchType, setSearchType] = useState("name"); // name, phone, id
@@ -164,21 +171,23 @@ function DoctorHome() {
         throw new Error("Server không hoạt động");
       }
       
-      const token = localStorage.getItem("token");
-      
+      //const token = localStorage.getItem("token");
+     // console.log("Token từ localStorage:", token);
+
       // Sử dụng API đúng từ patient.js để lấy tất cả bệnh nhân
       const res = await fetch(`http://localhost:5000/api/patient/list/all`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          // "Authorization": `Bearer ${token}`
         },
-        signal: AbortSignal.timeout(10000) // 10 giây timeout
+       // signal: AbortSignal.timeout(10000) // 10 giây timeout
       });
       
       if (!res.ok) {
         throw new Error(`Lỗi khi lấy danh sách bệnh nhân: ${res.status}`);
       }
+     // console.log("Token từ localStorage:", token);
       
       const data = await res.json();
         if (data.success && Array.isArray(data.patients)) {
@@ -272,6 +281,27 @@ function DoctorHome() {
     localStorage.removeItem("token");
     navigate("/");
   };
+  const handleStartChat = async (patientId) => {
+  const user = JSON.parse(localStorage.getItem("user"));
+  try {
+    const res = await fetch("http://localhost:5000/chat/start", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ participants: [user.id, patientId] }),
+    });
+
+    const data = await res.json();
+    if (data.chatID) {
+      // chuyển tab và truyền dữ liệu vào ChatApp
+      setChatInfo({ chatID: data.chatID, otherID: patientId });
+      setActiveTab("Chat");
+    }
+  } catch (err) {
+    console.error("Lỗi khi tạo hoặc vào trò chuyện:", err);
+  }
+};
+
+
 
   const filteredPatients = patients.filter(patient => {
     const searchLower = searchTerm.toLowerCase();
@@ -530,6 +560,14 @@ function DoctorHome() {
                           >
                             <FaHistory /> Lịch Sử Khám
                           </button>
+                           <button
+   className="history-button tertiary"
+  onClick={() => handleStartChat(patient.id)}
+  title="Trò chuyện với bệnh nhân"
+>
+  💬 Trò chuyện
+</button>
+
                         </div>
                       </div>
                     ))
@@ -562,11 +600,14 @@ function DoctorHome() {
           </section>
         )}
 
-        {activeTab === "Chat" && (
-          <section className="doctor-content">
-            <Chat />
-          </section>
-        )} 
+       {activeTab === "Chat" && (
+  <section className="doctor-content">
+    <ChatApp
+      initialChatID={chatInfo?.chatID}
+      initialOtherID={chatInfo?.otherID}
+    />
+  </section>
+)}
 
         {activeTab === "Thông tin" && (
           <section className="doctor-content personal-info-content">

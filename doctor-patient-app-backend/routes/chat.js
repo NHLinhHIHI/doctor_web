@@ -3,48 +3,82 @@ const express = require('express');
 
 const router = express.Router();
 
-const { db } = require("../firebase");
-const admin = require('firebase-admin');
-
-router.get('/:userId', async (req, res) => {
-  const currentUserId = req.params.userId;
-  console.log(`Received request GET /chat/${req.params.userId} at ${new Date().toISOString()}`);
-
+// const { db } = require("../firebase");
+const { admin, db } = require("../firebase");
+router.get("/:userID", async (req, res) => {
+  const { userID } = req.params;
   try {
-    // Truy vấn tất cả các cuộc trò chuyện mà currentUserId tham gia
-    const chatRef = db.collection('chat');
-    const snapshot = await chatRef.where('participants', 'array-contains', currentUserId).get();
+    const snapshot = await db.collection("chat")
+      .where("participants", "array-contains", userID)
+      .get();
 
-    if (snapshot.empty) {
-      return res.json([]);
+    const chats = [];
+
+    for (const doc of snapshot.docs) {
+      const data = doc.data();
+      const chatID = doc.id;
+
+      const otherID = data.participants.find(id => id !== userID);
+      let otherName = "Người dùng";
+
+      // Lấy thông tin user từ Firestore
+      if (otherID) {
+        const userDoc = await db.collection("users").doc(otherID).get();
+        if (userDoc.exists) {
+          const profile = userDoc.data().ProfileNormal;
+          if (Array.isArray(profile) && profile.length > 1) {
+            otherName = profile[0]; // Giả sử: profile[1] = "Tên"
+          }
+        }
+      }
+
+      chats.push({
+        id: chatID,
+        ...data,
+        otherID,
+        otherName
+      });
     }
 
-    const conversations = await Promise.all(
-      snapshot.docs.map(async (docSnap) => {
-        const data = docSnap.data();
-        const chatId = docSnap.id;
-
-        const otherUserId = data.participants.find((id) => id !== currentUserId);
-
-        // Lấy thông tin người dùng khác
-        const userDoc = await db.collection('users').doc(otherUserId).get();
-        const otherUser = userDoc.exists ? userDoc.data() : { displayName: 'Người dùng ẩn' };
-
-        return {
-          chatId,
-          otherUserId,
-          otherUser,
-          lastMessage: data.lastmessage || '',
-          lastSender: data.lastsender || '',
-          lastTimestamp: data.lastTimestamp ? data.lastTimestamp.toDate() : null,
-        };
-      })
-    );
-
-    res.json(conversations);
+    res.json(chats);
   } catch (error) {
-    console.error('Lỗi khi lấy danh sách chat:', error);
-    res.status(500).json({ error: 'Lỗi máy chủ khi lấy dữ liệu chat' });
+    console.error("🔥 Lỗi lấy danh sách chat:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+// Tạo cuộc trò chuyện giữa 2 người (nếu chưa có)
+router.post("/start", async (req, res) => {
+  const { participants } = req.body;
+
+  if (!Array.isArray(participants) || participants.length !== 2) {
+    return res.status(400).json({ error: "participants must be an array of 2 user IDs" });
+  }
+
+  try {
+    const snapshot = await db.collection("chat")
+      .where("participants", "in", [
+        participants,
+        [participants[1], participants[0]]
+      ])
+      .limit(1)
+      .get();
+
+    if (!snapshot.empty) {
+      const existingChat = snapshot.docs[0];
+      return res.json({ chatID: existingChat.id, exists: true });
+    }
+
+    const newChatRef = await db.collection("chat").add({
+      participants,
+      createdAt: new Date(),
+      lastMessage: "",
+      lastTimestamp: null,
+    });
+
+    return res.json({ chatID: newChatRef.id, created: true });
+  } catch (error) {
+    console.error("Error creating chat:", error);
+    return res.status(500).json({ error: error.message });
   }
 });
 

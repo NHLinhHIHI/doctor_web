@@ -65,9 +65,24 @@ app.get("/api/health", (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+const http = require("http");
+const { Server } = require("socket.io");
 
-// Khởi động server
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-  console.log(`API URL: http://localhost:${port}`);
+const server = http.createServer(app);
+
+// Tạo socket.io instance
+const io = new Server(server, {
+  cors: {
+    origin: "*", // Cho phép truy cập từ frontend
+    methods: ["GET", "POST"]
+  }
+});
+
+// Import và khởi tạo socket xử lý
+require("./sockets/chatSocket")(io);
+
+// Chạy server
+server.listen(port, () => {
+  const ip = "172.16.2.190"; // Thay bằng IP nội bộ máy bạn
+  console.log(`🚀 Server + Socket.IO running at http://172.16.2.190:${port}`);
 });

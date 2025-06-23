@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FaArrowLeft, FaUserMd, FaFileMedical } from "react-icons/fa";
 import "./patientDetail.css";
 //import PatientDetail2 from "./PatientDetail2";
-import PatientManager from "./PatientManager";
+//import PatientManager from "./PatientManager";
 const PatientDetail2 = ({ patientId }) => {
   const navigate = useNavigate();
 
@@ -19,6 +19,7 @@ const PatientDetail2 = ({ patientId }) => {
 
   const heightM = heightCm / 100;
   const bmi = weight / (heightM * heightM);
+  
   return bmi.toFixed(1); // Làm tròn 1 chữ số thập phân
 };
 
@@ -61,14 +62,18 @@ const PatientDetail2 = ({ patientId }) => {
       setLoading(false);
     }
   };
+  
 
   useEffect(() => {
     if (patientId) {
       fetchPatientDetails(patientId);
     }
   }, [patientId]);
+  const goBack = () => {
+    navigate(-1); // Quay lại trang trước đó
+  };
 
-  const goBack = () => navigate(-1);
+  //const goBack = () => navigate(-1);
 
   if (loading) return <div className="loading">Đang tải thông tin bệnh nhân...</div>;
   if (error) return <div className="error">{error}</div>;
@@ -77,7 +82,7 @@ const PatientDetail2 = ({ patientId }) => {
   return (
     <div className="patient-detail-container">
       <div className="back-button" onClick={goBack}>
-        <PatientManager /> Quay lại danh sách
+       Quay lại danh sách
       </div>
 
       <div className="patient-header">
@@ -144,10 +149,8 @@ const PatientDetail2 = ({ patientId }) => {
                 <div className="medical-record-header">
                    <div className="medical-record-header"><strong>Ngày:</strong> {record.date}</div>
                   <div className="medical-record-diagnosis"><strong>Chẩn đoán:</strong> {record.diagnosis}</div>
-
-               
                 </div>
-                              <p><strong>Đơn thuốc:</strong><br /> {record.prescription}</p>
+                <p><strong>Đơn thuốc:</strong><br /> {record.prescription}</p>
                 <p><strong>Ngày tái khám:</strong> {record.reExamDate}</p>
                 <p ><strong>Ghi chú :</strong> {record.notes}</p>
               </div>

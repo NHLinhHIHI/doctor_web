@@ -17,6 +17,10 @@
     "ejs": "^3.1.10",
     "express": "^5.1.0",
     "firebase-admin": "^13.2.0",
-    "nodemailer": "^7.0.3"
+    "fs": "^0.0.1-security",
+    "nodemailer": "^7.0.3",
+    "path": "^0.12.7",
+    "puppeteer": "^24.10.2",
+    "socket.io": "^4.8.1"
   }
 }
