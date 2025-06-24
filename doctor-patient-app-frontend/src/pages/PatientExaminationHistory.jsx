@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { FaArrowLeft, FaFilter, FaSearch, FaCalendarAlt, FaPrint, FaDownload, FaInfoCircle, FaTimes, FaArrowUp, FaPills, FaClipboardList } from 'react-icons/fa';
+import { FaArrowLeft,FaEnvelope , FaFilter, FaSearch, FaCalendarAlt, FaPrint, FaDownload, FaInfoCircle, FaTimes, FaArrowUp, FaPills, FaClipboardList } from 'react-icons/fa';
 import './patientExaminationHistory.css';
 
 const PatientExaminationHistory = () => {
@@ -41,6 +41,33 @@ const PatientExaminationHistory = () => {
       behavior: 'smooth'
     });
   };
+  const remindSchedule = async (exam) => {
+  try {
+    //const html = createExamHtml(exam, patient);
+    const res = await fetch('http://localhost:5000/doctor/send-reminder-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        patientID: patientId,
+        reExamDate: exam.reExamDate,
+        name: patient.name,
+        email: patient.email, // giả sử bạn có patient.email
+    //    html, // Chuyển đổi HTML thành chuỗi
+
+      }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert('Đã gửi nhắc lịch thành công!');
+    } else {
+      alert('Không thể gửi nhắc lịch');
+    }
+  } catch (error) {
+    console.error(error);
+    alert('Lỗi khi gửi nhắc lịch');
+  }
+};
+
 
   // Check URL parameters for view mode
   useEffect(() => {
@@ -241,84 +268,99 @@ const PatientExaminationHistory = () => {
         return sortOrder === 'desc' ? monthB - monthA : monthA - monthB;
       });
   };
+ // const htmlContent = crea  teExamHtml(exam, patient);
+
   // Tạo HTML cho phiếu khám
-  const createExamHtml = (exam) => {
-    return `
-      <html>
-        <head>
-          <title>Phiếu Khám Bệnh - ${patient?.name || 'Bệnh nhân'}</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            .header { text-align: center; margin-bottom: 20px; }
-            .patient-info { margin-bottom: 20px; border: 1px solid #ddd; padding: 10px; }
-            .record-info { margin-bottom: 20px; }
-            .medicines { margin-left: 20px; }
-            .footer { margin-top: 30px; text-align: center; font-style: italic; }
-            table { width: 100%; border-collapse: collapse; }
-            table, th, td { border: 1px solid #ddd; padding: 8px; }
-            th { background-color: #f2f2f2; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>PHIẾU KHÁM BỆNH</h1>
-            <p>Ngày khám: ${formatDate(exam.examinationDate)}</p>
-          </div>
-          
-          <div class="patient-info">
-            <h2>Thông tin bệnh nhân</h2>            <p><strong>Họ tên:</strong> ${patient?.name || 'Không có thông tin'}</p>
-            <p><strong>Ngày sinh:</strong> ${formatDate(patient?.birthDate) || 'Không có thông tin'}</p>
-            <p><strong>Giới tính:</strong> ${patient?.gender || 'Không có thông tin'}</p>
-            <p><strong>CCCD:</strong> ${patient?.cccd || 'Không có thông tin'}</p>
-            <p><strong>Địa chỉ:</strong> ${patient?.address || 'Không có thông tin'}</p>
-            <p><strong>Số điện thoại:</strong> ${patient?.phone || 'Không có thông tin'}</p>
-          </div>
-          
-          <div class="record-info">
-            <h2>Thông tin khám bệnh</h2>
-            <p><strong>Bác sĩ khám:</strong> ${exam.doctorName || 'Không có thông tin'}</p>
-            <p><strong>Triệu chứng:</strong> ${exam.symptoms || 'Không ghi nhận'}</p>
-            <p><strong>Chẩn đoán:</strong> ${exam.diagnosis || 'Không ghi nhận'}</p>
-            <p><strong>Ghi chú:</strong> ${exam.notes || 'Không có'}</p>
-            ${exam.reExamDate ? `<p><strong>Ngày tái khám:</strong> ${formatDate(exam.reExamDate)}</p>` : ''}
-          </div>
-            ${exam.medications && exam.medications.length > 0 ? `
-            <div class="prescription">
-              <h2>Đơn thuốc</h2>
-              <table>
-                <tr>
-                  <th>Tên thuốc</th>
-                  <th>Liều dùng</th>
-                  <th>Tần suất</th>
-                  <th>Số lượng</th>
-                  <th>Ghi chú</th>
-                </tr>
-                ${exam.medications.map(med => `
-                  <tr>
-                    <td>${med.medicineName || ''}</td>
-                    <td>${med.dosage || ''}</td>
-                    <td>${med.frequency || ''}</td>
-                    <td>${med.quantity || ''}</td>
-                    <td>${med.usageNotes || ''}</td>
-                  </tr>
-                `).join('')}
-              </table>
-            </div>
-          ` : ''}
-          
-          <div class="footer">
-            <p>Ngày: ${new Date().toLocaleDateString('vi-VN')}</p>
-          </div>
-        </body>
-      </html>
-    `;
-  };
+  const createExamHtml = (exam, patient) => {
+  const formattedDate = new Date().toLocaleDateString('vi-VN');
+  return `
+  <html>
+    <head>
+      <title>Toa Thuốc - ${patient?.name || 'Bệnh nhân'}</title>
+      <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 30px; }
+        .title { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
+        .clinic-info { font-size: 14px; }
+        .section-title { font-weight: bold; font-size: 18px; margin-top: 30px; }
+        .info, .diagnosis, .notes, .footer { font-size: 16px; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        table, th, td { border: 1px solid #ddd; padding: 8px; }
+        th { background-color: #f2f2f2; }
+        .footer { margin-top: 40px; font-style: italic; text-align: center; }
+      </style>
+    </head>
+
+    <body>
+    
+      <div class="header">
+      
+       
+        <div class="clinic-info">
+          HÒA BÌNH HOSPITAL - Nguyen Van Troi<br/>
+          135A Nguyen Van Troi, Phu Nhuan District, HCM City<br/>
+          Tel: (078) 747 7687 | Email: HoaBinhHospital@hospital.com.vn
+        </div>
+      </div>
+       <div class="title">TOA THUỐC (PRESCRIPTION)</div>
+
+      <div class="section-title">Thông Tin Bệnh Nhân / Patient Info</div>
+      <div class="info">
+        <p><strong>Họ tên / Name:</strong> ${patient?.name || 'Không có'}</p>
+        <p><strong>Ngày sinh / Birthday:</strong> ${patient?.birthDate || 'Không có'}</p>
+        <p><strong>Giới tính / Gender:</strong> ${patient?.gender || 'Không có'}</p>
+        <p><strong>CCCD / ID No.:</strong> ${patient?.cccd || 'Không có'}</p>
+        <p><strong>Địa chỉ / Address:</strong> ${patient?.address || 'Không có'}</p>
+        <p><strong>Điện thoại / Phone:</strong> ${patient?.phone || 'Không có'}</p>
+      </div>
+
+      <div class="section-title">Chẩn Đoán / Diagnosis</div>
+      <div class="diagnosis">${exam.diagnosis || 'Không ghi nhận'}</div>
+
+      <div class="section-title">Đơn Thuốc / Prescription</div>
+      ${exam.medications && exam.medications.length > 0 ? `
+      <table>
+        <tr>
+          <th>Tên thuốc</th>
+          <th>Liều dùng</th>
+          <th>Cách sử dụng</th>
+          <th>Số lượng</th>
+          <th>Ghi chú</th>
+        </tr>
+        ${exam.medications.map(med => `
+          <tr>
+            <td>${med.medicineName || ''}</td>
+            <td>${med.dosage || ''}</td>
+            <td>${med.frequency || ''}</td>
+            <td>${med.quantity || ''}</td>
+            <td>${med.usageNotes || ''}</td>
+          </tr>
+        `).join('')}
+      </table>` : `<p>Không có đơn thuốc.</p>`}
+
+      <div class="section-title">Lời Dặn / Advice</div>
+      <div class="notes">${exam.notes || 'Không có lời dặn.'}</div>
+
+      ${exam.reExamDate ? `
+        <div class="section-title">Ngày Tái Khám / Appointment Date</div>
+        <div class="info">${formatDate(exam.reExamDate)}</div>
+      ` : ''}
+
+      <div class="footer">
+        Ngày in: ${formattedDate}<br/>
+        Bác sĩ: ${exam.doctorName || '---'}
+      </div>
+    </body>
+  </html>
+  `;
+};
+
   const handlePrintExamination = (exam) => {
     // Tạo nội dung HTML cho phiếu khám
     setProcessingAction(true);
     setActionType('print');
     
-    const printContent = createExamHtml(exam);
+    const printContent = createExamHtml(exam, patient);
     
     // Tạo window mới để in
     const printWindow = window.open('', '_blank');
@@ -335,35 +377,39 @@ const PatientExaminationHistory = () => {
   };
   
   // Hàm xuất PDF
-  const handleExportPDF = (exam) => {
-    // Thông báo xuất PDF
-    setProcessingAction(true);
-    setActionType('export');
-    
-    // Sử dụng cách đơn giản để chuyển HTML thành PDF bằng cách in vào file
-    // Trong ứng dụng thực tế, sẽ cần sử dụng thư viện như jsPDF, html2pdf.js, hoặc 
-    // gọi API phía server để tạo PDF
-    const printContent = createExamHtml(exam);
-    
-    // Tạo window mới để "in" thành PDF
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(printContent);
-    printWindow.document.close();
-    
-    // Chờ nội dung load xong và xuất PDF
-    printWindow.onload = function() {
-      setTimeout(() => {
-        // Xuất PDF từ trình duyệt
-        printWindow.print();
-        
-        // Đóng window sau khi xuất xong
-        setTimeout(() => {
-          printWindow.close();
-          setProcessingAction(false);
-        }, 500);
-      }, 500);
-    };
-  };  // Xử lý khi người dùng nhấp nút quay lại
+ const handleSendPDFByEmail = async (exam) => {
+  setProcessingAction(true);
+  setActionType('export');
+
+  try {
+    const html = createExamHtml(exam, patient);
+
+    const res = await fetch('http://localhost:5000/doctor/send-pdf-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: patient.name,
+        email: patient.email,
+        //reExamDate: exam.reExamDate,
+        html,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      alert('Đã gửi file PDF qua email cho bệnh nhân!');
+    } else {
+      alert('Không thể gửi mail!');
+    }
+  } catch (error) {
+    console.error('Lỗi khi gửi email:', error);
+    alert('Lỗi khi gửi email!');
+  } finally {
+    setProcessingAction(false);
+  }
+};
+
   const handleBackNavigation = () => {
     // Kiểm tra nếu người dùng đã thực hiện tìm kiếm hoặc lọc
     if (searchTerm || filterType !== 'all' || sortOrder !== 'desc') {
@@ -541,6 +587,7 @@ const PatientExaminationHistory = () => {
                                 >
                                   <FaPills /> Đơn thuốc
                                 </button>
+                                
                               )}
                             </div>
                           </div>
@@ -578,9 +625,26 @@ const PatientExaminationHistory = () => {
                             {exam.reExamDate && (
                               <div className="reexam-date">
                                 <span className="label">Ngày tái khám:</span>
-                                <span className="value highlight">{formatDate(exam.reExamDate)}</span>
+                                
+                                <span className="value highlight">{formatDate(exam.reExamDate)||"KHông yêu cầu tái khám "}</span>
+                                  <button 
+                                  className="prescription-button" 
+                                  onClick={(e) => {
+                                
+                                    remindSchedule(exam);
+                                  }}
+                                >
+                                  Nhắc lịch 
+                                </button>
                               </div>
+                              
                             )}
+
+
+
+
+
+
                           </div>                          <div className="exam-actions">
                             <button 
                               className={`action-button print-button ${processingAction && actionType === 'print' ? 'loading' : ''}`}
@@ -599,13 +663,13 @@ const PatientExaminationHistory = () => {
                               className={`action-button export-button ${processingAction && actionType === 'export' ? 'loading' : ''}`}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                if (!processingAction) handleExportPDF(exam);
+                                if (!processingAction) handleSendPDFByEmail(exam);
                               }}
                               disabled={processingAction}
                             >
                               {processingAction && actionType === 'export' ? (
                                 <span className="button-loader"></span>
-                              ) : <FaDownload />} {processingAction && actionType === 'export' ? 'Đang xuất...' : 'Xuất PDF'}
+                              ) : <FaEnvelope  />} {processingAction && actionType === 'export' ? 'Đang gửi...' : 'GỬi file PDF'}
                             </button>
                           </div>
                         </div>
@@ -657,7 +721,7 @@ const PatientExaminationHistory = () => {
               <h3>In và xuất</h3>
               <ul>
                 <li><strong>In phiếu khám:</strong> Tạo bản in của phiếu khám để in trực tiếp</li>
-                <li><strong>Xuất PDF:</strong> Lưu phiếu khám dưới dạng tệp PDF để lưu trữ hoặc gửi cho bệnh nhân</li>
+                <li><strong>Gửi PDF:</strong> Lưu phiếu khám dưới dạng tệp PDF để gửi cho bệnh nhân</li>
               </ul>
             </div>
           </div>

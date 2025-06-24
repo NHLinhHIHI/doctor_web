@@ -46,7 +46,7 @@ app.use("/api/patient", patientRoutes);
 app.use("/api", patientProfileRoutes); // Lưu ý: Route này xử lý /api/patient-profile/:patientId
 app.use("/api/diagnostic", diagnosticRoutes); // Route chẩn đoán để debug vấn đề kết nối
 app.use('/api', require('./routes/user'));
-
+app.use(cors());
 // Route mặc định
 app.use("/notifications", notificationRoutes); 
 //app.use("/api", notificationRoutes);
@@ -65,9 +65,24 @@ app.get("/api/health", (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+const http = require("http");
+const { Server } = require("socket.io");
 
-// Khởi động server
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-  console.log(`API URL: http://localhost:${port}`);
+const server = http.createServer(app);
+
+// Tạo socket.io instance
+const io = new Server(server, {
+  cors: {
+    origin: "*", // Cho phép truy cập từ frontend
+    methods: ["GET", "POST"]
+  }
+});
+
+// Import và khởi tạo socket xử lý
+require("./sockets/chatSocket")(io);
+
+// Chạy server
+server.listen(port, () => {
+  const ip = "172.16.2.190"; // Thay bằng IP nội bộ máy bạn
+  console.log(`🚀 Server + Socket.IO running at http://172.16.2.190:${port}`);
 });
