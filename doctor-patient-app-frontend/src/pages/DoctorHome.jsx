@@ -144,7 +144,7 @@ function DoctorHome() {
         try {
           const response = await fetch('http://localhost:5000/', {
             method: 'GET',
-            signal: AbortSignal.timeout(3000) // 3s timeout for server status check
+            // signal: AbortSignal.timeout(3000) // 3s timeout for server status check
           });
           if (response.ok) {
             setServerStatus('online');

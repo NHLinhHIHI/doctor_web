@@ -2,181 +2,337 @@ const express = require("express");
 const router = express.Router();
 const { db } = require("../firebase");
 
+// router.get("/list/all", async (req, res) => {
+//   try {
+//     let patientsSnapshot = await db
+//       .collection("users")
+//       .where("Role", "==", "patient")
+//       .get();
+
+//     const patients = [];
+
+//     for (const doc of patientsSnapshot.docs) {
+//       const patientData = doc.data();
+//       const id = doc.id;
+
+//       // Skip nếu không phải patient thật sự
+//       if (patientData.Role !== "patient" && patientData.role !== "patient") continue;
+
+//       // Normal Profile
+//       let normalProfileData = {};
+//       let hasNormalProfile = false;
+//       try {
+//         const normalDoc = await db.collection("users").doc(id).collection("Profile").doc("NormalProfile").get();
+//         if (normalDoc.exists) {
+//           normalProfileData = normalDoc.data();
+//           hasNormalProfile = true;
+//         }
+//       } catch (err) {
+//         console.error(`NormalProfile Error (${id}):`, err);
+//       }
+
+//       // Health Profile
+//       let healthProfileData = {};
+//       let hasHealthProfile = false;
+//       try {
+//         const healthDoc = await db.collection("users").doc(id).collection("Profile").doc("HealthProfile").get();
+//         if (healthDoc.exists) {
+//           healthProfileData = healthDoc.data();
+//           hasHealthProfile = true;
+//         }
+//       } catch (err) {
+//         console.error(`HealthProfile Error (${id}):`, err);
+//       }
+
+//       // BMI
+//       let bmi = null;
+//       if (healthProfileData.Height && healthProfileData.Weight) {
+//         const h = parseFloat(healthProfileData.Height);
+//         const w = parseFloat(healthProfileData.Weight);
+//         if (!isNaN(h) && !isNaN(w) && h > 0) {
+//           const hM = h > 3 ? h / 100 : h;
+//           bmi = (w / (hM * hM)).toFixed(1);
+//         }
+//       }
+
+//       // Allergies
+//       let allergiesData = [];
+//       try {
+//         const allergiesDoc = await db.collection("users").doc(id).collection("MedicalData").doc("Allergies").get();
+//         if (allergiesDoc.exists) {
+//           const aData = allergiesDoc.data();
+//           allergiesData = aData.items || [];
+//         }
+//       } catch (err) {
+//         console.error(`Allergies Error (${id}):`, err);
+//       }
+
+//       // Medical Exams
+//       let medicalExams = [];
+//       try {
+//         const examSnap = await db.collection("users").doc(id).collection("MedicalExams").orderBy("date", "desc").limit(10).get();
+//         examSnap.forEach(exam => {
+//           const d = exam.data();
+//           medicalExams.push({
+//             id: exam.id,
+//             date: d.date,
+//             diagnosis: d.diagnosis || "Không có chẩn đoán",
+//             doctor: d.doctorName || "Không xác định",
+//             prescription: d.prescriptions || [],
+//             notes: d.notes || "Không có ghi chú"
+//           });
+//         });
+//       } catch (err) {
+//         console.error(`MedicalExams Error (${id}):`, err);
+//       }
+
+//       // Appointments
+//       let upcomingAppointments = [];
+//       try {
+//         const now = new Date();
+//         const today = now.toISOString().split('T')[0];
+//         const appointmentsSnap = await db.collection("appointments").where("patientId", "==", id).get();
+
+//         const filtered = [];
+//         appointmentsSnap.forEach(a => {
+//           const data = a.data();
+//           if (data.date && data.date >= today) {
+//             filtered.push({
+//               id: a.id,
+//               date: data.date,
+//               time: data.time || "Chưa xác định",
+//               doctor: data.doctorName || "Chưa xác định",
+//               department: data.department || "Khoa khám bệnh",
+//               status: data.status || "Đã đặt lịch"
+//             });
+//           }
+//         });
+
+//         upcomingAppointments = filtered.sort((a, b) => {
+//           if (a.date === b.date) return a.time.localeCompare(b.time);
+//           return a.date.localeCompare(b.date);
+//         });
+//       } catch (err) {
+//         console.error(`Appointments Error (${id}):`, err);
+//       }
+
+//       // Lab Results
+//       let labResults = [];
+//       try {
+//         const labSnap = await db.collection("users").doc(id).collection("LabResults").orderBy("date", "desc").limit(5).get();
+//         labSnap.forEach(lab => {
+//           const l = lab.data();
+//           labResults.push({
+//             id: lab.id,
+//             date: l.date || "Không có ngày",
+//             testName: l.testName || "Không có tên xét nghiệm",
+//             result: l.result || "Không có kết quả",
+//             notes: l.notes || "Không có ghi chú"
+//           });
+//         });
+//       } catch (err) {
+//         console.error(`LabResults Error (${id}):`, err);
+//       }
+
+//       // Tạo đối tượng patient
+//       const patient = {
+//         id: id,
+//         name: patientData.ProfileNormal?.[0] || normalProfileData.Name || patientData.name || "Không có tên",
+//         gender: patientData.ProfileNormal?.[3] || normalProfileData.Gender || "Không xác định",
+//         birthDate: patientData.ProfileNormal?.[1] || normalProfileData.DoB || "",
+//         phone: patientData.ProfileNormal?.[2] || normalProfileData.Phone || patientData.phone || "",
+//         cccd: patientData.ProfileNormal?.[4] || "",
+//         address: patientData.ProfileNormal?.[5] || normalProfileData.Address || "",
+//         email: patientData.email || "",
+//         profileImage: patientData.profileImage || null,
+//         ProfileNormal: patientData.ProfileNormal || null,
+
+//         vitalSigns: {
+//           height: healthProfileData.Height || "N/A",
+//           weight: healthProfileData.Weight || "N/A",
+//           heartRate: healthProfileData.HearthRate || healthProfileData.HeartRate || "N/A",
+//           leftEye: healthProfileData.LeftEye || "N/A",
+//           rightEye: healthProfileData.RightEye || "N/A",
+//           bmi: bmi || "N/A",
+//           bloodPressure: healthProfileData.BloodPressure || "N/A",
+//           temperature: healthProfileData.Temperature || "N/A",
+//           respiratoryRate: healthProfileData.RespiratoryRate || "N/A",
+//           bloodType: healthProfileData.BloodType || "N/A"
+//         },
+
+//         allergies: allergiesData,
+//         examinations: medicalExams,
+//         upcomingAppointments: upcomingAppointments,
+//         labResults: labResults,
+
+//         hasNormalProfile,
+//         hasHealthProfile,
+
+//         lastVisit: patientData.lastVisit || null
+//       };
+
+//       patients.push(patient);
+//     }
+
+//     return res.json({
+//       success: true,
+//       patients
+//     });
+
+//   } catch (error) {
+//     console.error("Lỗi server khi lấy danh sách bệnh nhân:", error);
+//     return res.status(500).json({
+//       success: false,
+//       error: "Lỗi server khi lấy danh sách bệnh nhân: " + error.message
+//     });
+//   }
+// });
+
+//new 
 router.get("/list/all", async (req, res) => {
   try {
-    let patientsSnapshot = await db
+    const patientsSnapshot = await db
       .collection("users")
       .where("Role", "==", "patient")
       .get();
 
-    const patients = [];
+    console.log("Tìm thấy", patientsSnapshot.size, "bệnh nhân");
 
-    for (const doc of patientsSnapshot.docs) {
-      const patientData = doc.data();
-      const id = doc.id;
+    const patients = await Promise.all(
+      patientsSnapshot.docs.map(async (doc) => {
+        const id = doc.id;
+        const patientData = doc.data();
+        const role = patientData.Role || patientData.role;
 
-      // Skip nếu không phải patient thật sự
-      if (patientData.Role !== "patient" && patientData.role !== "patient") continue;
+        if (role !== "patient") return null;
 
-      // Normal Profile
-      let normalProfileData = {};
-      let hasNormalProfile = false;
-      try {
-        const normalDoc = await db.collection("users").doc(id).collection("Profile").doc("NormalProfile").get();
-        if (normalDoc.exists) {
-          normalProfileData = normalDoc.data();
-          hasNormalProfile = true;
-        }
-      } catch (err) {
-        console.error(`NormalProfile Error (${id}):`, err);
-      }
+        const userRef = db.collection("users").doc(id);
 
-      // Health Profile
-      let healthProfileData = {};
-      let hasHealthProfile = false;
-      try {
-        const healthDoc = await db.collection("users").doc(id).collection("Profile").doc("HealthProfile").get();
-        if (healthDoc.exists) {
-          healthProfileData = healthDoc.data();
-          hasHealthProfile = true;
-        }
-      } catch (err) {
-        console.error(`HealthProfile Error (${id}):`, err);
-      }
+        const [
+          normalDoc,
+          healthDoc,
+          allergiesDoc,
+          examSnap,
+          labSnap,
+        ] = await Promise.all([
+          userRef.collection("Profile").doc("NormalProfile").get(),
+          userRef.collection("Profile").doc("HealthProfile").get(),
+          userRef.collection("MedicalData").doc("Allergies").get(),
+          userRef.collection("MedicalExams").orderBy("date", "desc").limit(10).get(),
+          userRef.collection("LabResults").orderBy("date", "desc").limit(5).get(),
+        ]);
 
-      // BMI
-      let bmi = null;
-      if (healthProfileData.Height && healthProfileData.Weight) {
+        // Normal & Health Profile
+        const normalProfileData = normalDoc.exists ? normalDoc.data() : {};
+        const healthProfileData = healthDoc.exists ? healthDoc.data() : {};
+
+        // BMI
+        let bmi = null;
         const h = parseFloat(healthProfileData.Height);
         const w = parseFloat(healthProfileData.Weight);
         if (!isNaN(h) && !isNaN(w) && h > 0) {
           const hM = h > 3 ? h / 100 : h;
           bmi = (w / (hM * hM)).toFixed(1);
         }
-      }
 
-      // Allergies
-      let allergiesData = [];
-      try {
-        const allergiesDoc = await db.collection("users").doc(id).collection("MedicalData").doc("Allergies").get();
-        if (allergiesDoc.exists) {
-          const aData = allergiesDoc.data();
-          allergiesData = aData.items || [];
-        }
-      } catch (err) {
-        console.error(`Allergies Error (${id}):`, err);
-      }
+        // Allergies
+        const allergiesData = allergiesDoc.exists ? allergiesDoc.data().items || [] : [];
 
-      // Medical Exams
-      let medicalExams = [];
-      try {
-        const examSnap = await db.collection("users").doc(id).collection("MedicalExams").orderBy("date", "desc").limit(10).get();
-        examSnap.forEach(exam => {
+        // Medical Exams
+        const medicalExams = examSnap.docs.map(exam => {
           const d = exam.data();
-          medicalExams.push({
+          return {
             id: exam.id,
             date: d.date,
             diagnosis: d.diagnosis || "Không có chẩn đoán",
             doctor: d.doctorName || "Không xác định",
             prescription: d.prescriptions || [],
             notes: d.notes || "Không có ghi chú"
-          });
+          };
         });
-      } catch (err) {
-        console.error(`MedicalExams Error (${id}):`, err);
-      }
 
-      // Appointments
-      let upcomingAppointments = [];
-      try {
-        const now = new Date();
-        const today = now.toISOString().split('T')[0];
-        const appointmentsSnap = await db.collection("appointments").where("patientId", "==", id).get();
+        // Lab Results
+        const labResults = labSnap.docs.map(lab => {
+          const l = lab.data();
+          return {
+            id: lab.id,
+            date: l.date || "Không có ngày",
+            testName: l.testName || "Không có tên xét nghiệm",
+            result: l.result || "Không có kết quả",
+            notes: l.notes || "Không có ghi chú"
+          };
+        });
 
-        const filtered = [];
-        appointmentsSnap.forEach(a => {
-          const data = a.data();
-          if (data.date && data.date >= today) {
-            filtered.push({
+        // Appointments
+        let upcomingAppointments = [];
+        try {
+          const now = new Date().toISOString().split("T")[0];
+          const appointmentsSnap = await db.collection("appointments").where("patientId", "==", id).get();
+          const filtered = appointmentsSnap.docs.map(a => {
+            const data = a.data();
+            return {
               id: a.id,
               date: data.date,
               time: data.time || "Chưa xác định",
               doctor: data.doctorName || "Chưa xác định",
               department: data.department || "Khoa khám bệnh",
               status: data.status || "Đã đặt lịch"
-            });
-          }
-        });
+            };
+          }).filter(a => a.date >= now);
 
-        upcomingAppointments = filtered.sort((a, b) => {
-          if (a.date === b.date) return a.time.localeCompare(b.time);
-          return a.date.localeCompare(b.date);
-        });
-      } catch (err) {
-        console.error(`Appointments Error (${id}):`, err);
-      }
-
-      // Lab Results
-      let labResults = [];
-      try {
-        const labSnap = await db.collection("users").doc(id).collection("LabResults").orderBy("date", "desc").limit(5).get();
-        labSnap.forEach(lab => {
-          const l = lab.data();
-          labResults.push({
-            id: lab.id,
-            date: l.date || "Không có ngày",
-            testName: l.testName || "Không có tên xét nghiệm",
-            result: l.result || "Không có kết quả",
-            notes: l.notes || "Không có ghi chú"
+          upcomingAppointments = filtered.sort((a, b) => {
+            if (a.date === b.date) return a.time.localeCompare(b.time);
+            return a.date.localeCompare(b.date);
           });
-        });
-      } catch (err) {
-        console.error(`LabResults Error (${id}):`, err);
-      }
+        } catch (err) {
+          console.error(`Appointments Error (${id}):`, err);
+        }
 
-      // Tạo đối tượng patient
-      const patient = {
-        id: id,
-        name: patientData.ProfileNormal?.[0] || normalProfileData.Name || patientData.name || "Không có tên",
-        gender: patientData.ProfileNormal?.[3] || normalProfileData.Gender || "Không xác định",
-        birthDate: patientData.ProfileNormal?.[1] || normalProfileData.DoB || "",
-        phone: patientData.ProfileNormal?.[2] || normalProfileData.Phone || patientData.phone || "",
-        cccd: patientData.ProfileNormal?.[4] || "",
-        address: patientData.ProfileNormal?.[5] || normalProfileData.Address || "",
-        email: patientData.email || "",
-        profileImage: patientData.profileImage || null,
-        ProfileNormal: patientData.ProfileNormal || null,
+        // Final patient object
+        return {
+          id,
+          name: patientData.ProfileNormal?.[0] || normalProfileData.Name || patientData.name || "Không có tên",
+          gender: patientData.ProfileNormal?.[3] || normalProfileData.Gender || "Không xác định",
+          birthDate: patientData.ProfileNormal?.[1] || normalProfileData.DoB || "",
+          phone: patientData.ProfileNormal?.[2] || normalProfileData.Phone || patientData.phone || "",
+          cccd: patientData.ProfileNormal?.[4] || "",
+          address: patientData.ProfileNormal?.[5] || normalProfileData.Address || "",
+          email: patientData.email || "",
+          profileImage: patientData.profileImage || null,
+          ProfileNormal: patientData.ProfileNormal || null,
 
-        vitalSigns: {
-          height: healthProfileData.Height || "N/A",
-          weight: healthProfileData.Weight || "N/A",
-          heartRate: healthProfileData.HearthRate || healthProfileData.HeartRate || "N/A",
-          leftEye: healthProfileData.LeftEye || "N/A",
-          rightEye: healthProfileData.RightEye || "N/A",
-          bmi: bmi || "N/A",
-          bloodPressure: healthProfileData.BloodPressure || "N/A",
-          temperature: healthProfileData.Temperature || "N/A",
-          respiratoryRate: healthProfileData.RespiratoryRate || "N/A",
-          bloodType: healthProfileData.BloodType || "N/A"
-        },
+          vitalSigns: {
+            height: healthProfileData.Height || "N/A",
+            weight: healthProfileData.Weight || "N/A",
+            heartRate: healthProfileData.HearthRate || healthProfileData.HeartRate || "N/A",
+            leftEye: healthProfileData.LeftEye || "N/A",
+            rightEye: healthProfileData.RightEye || "N/A",
+            bmi: bmi || "N/A",
+            bloodPressure: healthProfileData.BloodPressure || "N/A",
+            temperature: healthProfileData.Temperature || "N/A",
+            respiratoryRate: healthProfileData.RespiratoryRate || "N/A",
+            bloodType: healthProfileData.BloodType || "N/A"
+          },
 
-        allergies: allergiesData,
-        examinations: medicalExams,
-        upcomingAppointments: upcomingAppointments,
-        labResults: labResults,
+          allergies: allergiesData,
+          examinations: medicalExams,
+          upcomingAppointments,
+          labResults,
 
-        hasNormalProfile,
-        hasHealthProfile,
+          hasNormalProfile: normalDoc.exists,
+          hasHealthProfile: healthDoc.exists,
 
-        lastVisit: patientData.lastVisit || null
-      };
+          lastVisit: patientData.lastVisit || null
+        };
+      })
+    );
 
-      patients.push(patient);
-    }
+    // Lọc những bệnh nhân null (do return null nếu role sai)
+    const filteredPatients = patients.filter(p => p !== null);
 
     return res.json({
       success: true,
-      patients
+      patients: filteredPatients
     });
 
   } catch (error) {
