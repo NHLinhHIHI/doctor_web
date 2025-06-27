@@ -10,40 +10,49 @@ import PatientDetail2 from "./pages/PatientDetail2";
 import ChatApp from "./pages/ChatApp";
 import { useParams, useLocation } from "react-router-dom";
 import ChatList from "./pages/ChatList";
-import ChatBox from   "./pages/ChatBox";
+import ChatBox from "./pages/ChatBox";
+import HomePage from "./pages/HomePage";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+import Services from "./pages/Services";
+
 function App() {
   const [currentView, setCurrentView] = useState("list");
   const [selectedPatientId, setSelectedPatientId] = useState(null);
+  
   const ChatPage = () => {
-  const { chatID } = useParams();
-  const location = useLocation();
+    const { chatID } = useParams();
+    const location = useLocation();
 
-  const queryParams = new URLSearchParams(location.search);
-  const otherUserID = queryParams.get("other"); // lấy từ ?other=abc
+    const queryParams = new URLSearchParams(location.search);
+    const otherUserID = queryParams.get("other"); // lấy từ ?other=abc
 
-  return <ChatBox chatID={chatID} otherUserID={otherUserID} />;
-};
+    return <ChatBox chatID={chatID} otherUserID={otherUserID} />;
+  };
 
   const handleViewPatientDetail = (patientID) => {
     setSelectedPatientId(patientID);
     setCurrentView("detail");
   };
+  
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/doctor" element={<DoctorHome />} />
+        <Route path="/" element={<HomePage />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/services" element={<Services />} />
+        <Route path="/contact" element={<Contact />} />
         <Route path="/patient/:patientId" element={<PatientDetail />} />
         <Route path="/medical-exam/:appointmentId" element={<MedicalExam />} />
         <Route path="/examination-history/:patientId" element={<PatientExaminationHistory />} />
         <Route path="/patient2/:patientId" element={<PatientDetail2 />} />
-         <Route path="/chat" element={<ChatApp />} />
-          <Route path="/chat/:chatID" element={<ChatPage />} />
-         
+        <Route path="/chat" element={<ChatApp />} />
+        <Route path="/chat/:chatID" element={<ChatPage />} />
       </Routes>
     </Router>
-    
   );
 }
 
