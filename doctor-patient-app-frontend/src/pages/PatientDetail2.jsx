@@ -4,7 +4,7 @@ import { FaArrowLeft, FaUserMd, FaFileMedical } from "react-icons/fa";
 import "./patientDetail.css";
 //import PatientDetail2 from "./PatientDetail2";
 //import PatientManager from "./PatientManager";
-const PatientDetail2 = ({ patientId }) => {
+const PatientDetail2 = ({ patientId,onBack  }) => {
   const navigate = useNavigate();
 
   const [patient, setPatient] = useState(null);
@@ -70,7 +70,9 @@ const PatientDetail2 = ({ patientId }) => {
     }
   }, [patientId]);
   const goBack = () => {
-    navigate(-1); // Quay lại trang trước đó
+     if (onBack) {
+    onBack(); // ← Gọi lại setActiveView từ AdminDashboard
+  }// Quay lại trang trước đó
   };
 
   //const goBack = () => navigate(-1);

@@ -48,6 +48,7 @@
     background-color: #00695c;
     color: white;
     padding: 20px;
+    align-self: stretch; 
   }
   
   .sidebar h3 {
@@ -98,7 +99,7 @@
   .card {
     padding: 20px;
     border-radius: 8px;
-    color: white;
+    color: 00695c;
     font-weight: bold;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     display: flex;
@@ -129,4 +130,36 @@
   .card.green { background-color: #4caf50; }
   .card.red { background-color: #f44336; }
   .card.gold { background-color: #ffc107; }
-  
+  html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+.admin-dashboard {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* toàn bộ chiều cao màn hình */
+}
+
+.main {
+  display: flex;
+  flex: 1; /* phần chiếm chiều cao còn lại sau header/navbar */
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 240px;
+  background-color: #00695c;
+  padding: 20px;
+  overflow-y: auto;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  height: 100%;
+  box-sizing: border-box;
+}

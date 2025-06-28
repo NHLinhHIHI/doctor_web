@@ -6,10 +6,16 @@ import AdminSchedule from "./AdminSchedule";
 import MedicineList from "./MedicineList";
 import PatientManager from "./PatientManager";
 import PatientDetail2 from "./PatientDetail2";
-
+import { FaSignOutAlt } from "react-icons/fa";
+import { useNavigate } from "react-router-dom"; 
 function AdminDashboard() {
   const user = JSON.parse(localStorage.getItem("user"));
   const [activeView, setActiveView] = useState("dashboard");
+  const handleLogout = () => {
+   
+    navigate("/");
+  };
+  const navigate = useNavigate();
 
   // 🔧 THÊM 2 cái này:
   const [selectedPatientId, setSelectedPatientId] = useState(null);
@@ -34,7 +40,12 @@ function AdminDashboard() {
       case "Medicine":
         return <MedicineList />;
       case "PatientDetail2":
-        return <PatientDetail2 patientId={selectedPatientId} />;
+  return (
+    <PatientDetail2
+      patientId={selectedPatientId}
+      onBack={() => setActiveView("dashboard")} // ← Gửi callback cho nút quay lại
+    />
+  );
       default:
         return (
           <PatientManager onViewDetail={handleViewPatientDetail} />
@@ -88,11 +99,17 @@ function AdminDashboard() {
               Medicine Manager
             </li>
           </ul>
+          <button className="logout-button" onClick={handleLogout}>
+                  <FaSignOutAlt /> Đăng xuất
+                </button>
         </aside>
 
         <section className="content">{renderContent()}</section>
+        
       </div>
+       
     </div>
+    
   );
 }
 

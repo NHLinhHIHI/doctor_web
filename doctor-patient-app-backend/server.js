@@ -83,6 +83,6 @@ require("./sockets/chatSocket")(io);
 
 // Chạy server
 server.listen(port, () => {
-  const ip = "172.16.2.190"; // Thay bằng IP nội bộ máy bạn
-  console.log(`🚀 Server + Socket.IO running at http://172.16.2.190:${port}`);
+  const ip = "10.102.61.228"; // Thay bằng IP nội bộ máy bạn
+  console.log(`🚀 Server + Socket.IO running at http://10.102.61.228:${port}`);
 });

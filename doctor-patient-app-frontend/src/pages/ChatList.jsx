@@ -10,9 +10,10 @@ const ChatList = ({ onSelectChat }) => {
 
     axios.get(`http://localhost:5000/chat/${user.id}`)
       .then((res) => {
-        const sortedChats = res.data.sort((a, b) => 
-          b.lastTimestamp?.seconds - a.lastTimestamp?.seconds
-        );
+        const sortedChats = res.data
+  .filter(chat => chat.lastTimestamp?._seconds) // bỏ mấy thằng null
+  .sort((a, b) => b.lastTimestamp._seconds - a.lastTimestamp._seconds);
+
         setChats(sortedChats);
       })
       .catch(err => console.error("Failed to load chats", err));

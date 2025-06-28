@@ -11,6 +11,7 @@ import ChatApp from "./pages/ChatApp";
 import { useParams, useLocation } from "react-router-dom";
 import ChatList from "./pages/ChatList";
 import ChatBox from   "./pages/ChatBox";
+import 'bootstrap/dist/css/bootstrap.min.css';
 function App() {
   const [currentView, setCurrentView] = useState("list");
   const [selectedPatientId, setSelectedPatientId] = useState(null);

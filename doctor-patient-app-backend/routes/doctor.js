@@ -31,7 +31,7 @@ router.post("/send-reminder-email", async (req, res) => {
       from: 'LINH.NH18886@sinhvien.hoasen.edu.vn',
       to: email,  
       subject: "Nhắc lịch khám bệnh",
-      text: `Xin chào bạn  ${name}, đây là lời nhắc lịch khám vào ngày ${formattedDate}.`,
+      text: `Xin chào bạn  ${name}, Bạn có lịch tái khám vào  ${formattedDate}, mọi sự thay đổi vui lòng liên hệ lại với chúng tôi .`,
       html
 
     });

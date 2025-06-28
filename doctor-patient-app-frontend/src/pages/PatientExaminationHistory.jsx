@@ -669,7 +669,7 @@ const PatientExaminationHistory = () => {
                             >
                               {processingAction && actionType === 'export' ? (
                                 <span className="button-loader"></span>
-                              ) : <FaEnvelope  />} {processingAction && actionType === 'export' ? 'Đang gửi...' : 'GỬi file PDF'}
+                              ) : <FaEnvelope  />} {processingAction && actionType === 'export' ? 'Đang gửi...' : 'Gửi file PDF'}
                             </button>
                           </div>
                         </div>

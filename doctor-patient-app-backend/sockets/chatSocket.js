@@ -69,7 +69,7 @@ socket.on("receive_message", (message) => {
       .collection("chat")
       .doc(chatID)
       .collection("messages")
-      .orderBy("timestamp", "asc")
+      .orderBy("timestamp", "desc")
       .get();
 
     const messages = messagesSnap.docs.map(doc => ({

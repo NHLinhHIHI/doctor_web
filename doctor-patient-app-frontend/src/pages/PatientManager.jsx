@@ -93,8 +93,8 @@ const navigate = useNavigate();
                 {/* <th>Mã bác sĩ</th> */}
                 <th>Tên</th>
                 <th>Ca</th>
-                <th>Phòng</th>
-                <th>Lượt khám / Tổng số ca</th>
+                
+                <th>Đã khám / Tổng số bệnh nhân </th>
                 <th>Thao tác</th>
               </tr>
             </thead>
@@ -105,8 +105,13 @@ const navigate = useNavigate();
                     {/* <td>{group.doctorID}</td> */}
                     <td>{group.doctorName}</td>
                     <td>{group.shift}</td>
-                    <td>{group.room}</td>
-                    <td>{group.patients.length} / {group.patients.length}</td>
+                   
+                    <td>
+  {
+    group.patients.filter((p) => p.status === "completed").length
+  } / {group.patients.length}
+</td>
+
                     <td>
                       <button onClick={() => toggleExpand(group.doctorID)}>
                         {expandedDoctors[group.doctorID] ? "Ẩn bớt" : "Xem thêm"}

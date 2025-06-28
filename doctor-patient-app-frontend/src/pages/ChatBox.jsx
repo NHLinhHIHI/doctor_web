@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import io from "socket.io-client";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { db } from "../firebase";
+//import { db } from "../firebase";
 
 //import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 
