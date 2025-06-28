@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaPhone, FaMapMarkerAlt, FaClock, FaEnvelope, FaSignOutAlt, FaFacebook, FaTwitter, FaInstagram, FaLinkedin, FaYoutube } from 'react-icons/fa';
+import { FaPhone, FaMapMarkerAlt, FaClock, FaEnvelope, FaSignOutAlt} from 'react-icons/fa';
 import './contact.css';
 
 function DoctorContact() {
@@ -208,7 +208,7 @@ function DoctorContact() {
         </div>
         <nav className="doctor-nav">
           <ul>
-            <li onClick={() => navigate('/home')}>HOME</li>
+            <li onClick={() => navigate('/')}>HOME</li>
             <li onClick={() => navigate('/about')}>ABOUT</li>
             <li onClick={() => navigate('/services')}>SERVICES</li>
             <li className="active" onClick={() => navigate('/contact')}>CONTACT</li>
@@ -225,8 +225,6 @@ function DoctorContact() {
       </header>
 
       <div className="doctor-main">
-       
-
         <section className="doctor-content contact-content">
           {/* Hero Section */}
           <div className="contact-hero">

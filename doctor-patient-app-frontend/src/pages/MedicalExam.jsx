@@ -1,11 +1,11 @@
-// MedicalExam.js
-import React, { useState, useEffect } from 'react';
+// MedicalExam.js - Đã tinh gọn
+import React, { useState, useEffect, useCallback } from 'react'; // Thêm useCallback
 import './medicalExam.css';
 import './medicalExamSplit.css';
 import './healthProfile.css';
-import { FaPlus, FaTrash, FaPrint, FaSave, FaUndo, FaStethoscope, FaUserInjured, FaArrowRight, FaSearch, FaUserMd, FaHistory, FaSyncAlt} from 'react-icons/fa';
-import { db } from '../firebase';
-import { collection, query, where, getDocs, doc, orderBy, Timestamp, onSnapshot, addDoc, setDoc, writeBatch, collectionGroup, getDoc } from "firebase/firestore";
+import { FaPlus, FaTrash, FaPrint, FaSave, FaUndo, FaStethoscope, FaUserInjured, FaArrowRight, FaSearch, FaUserMd, FaHistory, FaSyncAlt } from 'react-icons/fa';
+// import { db } from '../firebase'; // Không còn cần truy cập trực tiếp Firestore từ frontend
+// import { collection, query, where, getDocs, doc, orderBy, Timestamp, onSnapshot, addDoc, setDoc, writeBatch, collectionGroup, getDoc } from "firebase/firestore"; // Không còn cần các hàm Firestore
 import axios from 'axios';
 import PatientRecord from '../components/PatientRecord';
 
@@ -15,7 +15,7 @@ const API_CONFIG = {
   ENDPOINTS: {
     MEDICAL_EXAM: '/api/medicalExam',
     WAITING_PATIENTS: '/api/medicalExam/waiting-patients',
-    SEARCH_MEDICINE: '/medicine/name-medicine',
+    SEARCH_MEDICINE: '/medicine/name-medicine', // Giả định endpoint này vẫn là của backend medicine service
   }
 };
 
@@ -40,7 +40,7 @@ const MedicalExam = () => {
       heartRate: '',
       height: '',
       leftEye: '',
-      rightEye: '',
+      rightEye: '', // Giữ lại để tránh lỗi nếu có nơi nào đó vẫn dùng, dù backend chỉ trả về 'Eye'
       weight: '',
       medicalHistory: ''
     }
@@ -55,366 +55,123 @@ const MedicalExam = () => {
   const [notes, setNotes] = useState('');
   const [reExamDate, setReExamDate] = useState('');
   // State cho chức năng tìm kiếm thuốc
-  const [allMedicines, setAllMedicines] = useState([])
   const [medicineSearchTerm, setMedicineSearchTerm] = useState('');
   const [medicineSearchResults, setMedicineSearchResults] = useState([]);
   const [isSearchingMedicine, setIsSearchingMedicine] = useState(false);
   const [activeMedicationIndex, setActiveMedicationIndex] = useState(0); // Để biết đang nhập vào dòng thuốc nào
+
   // Get current doctor info
   const getCurrentDoctor = () => {
     const doctorData = localStorage.getItem('user');
     if (doctorData) {
       return JSON.parse(doctorData);
     }
-   // return { id: "MW0d0z8l4maWvBZZytpZ29g5JJ23", name: "Bác sĩ Demo" };
+    // Trả về một ID và tên demo nếu không tìm thấy user trong localStorage
+    return { id: "MW0d0z8l4maWvBZZytpZ29g5JJ23", name: "Bác sĩ Demo" };
   };
 
   const currentDoctor = getCurrentDoctor();
+
   // Define fetchWaitingPatients at component level so it can be used throughout the component
-  const fetchWaitingPatients = async () => {
+  const fetchWaitingPatients = useCallback(async () => {
     try {
       const apiUrl = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.WAITING_PATIENTS}`;
+      console.log(`Fetching waiting patients from: ${apiUrl} for doctorId: ${currentDoctor.id}`);
       const response = await axios.get(apiUrl, {
-        params: { doctorId: currentDoctor.id }
+        params: { doctorId: currentDoctor.id, date: new Date().toISOString().split('T')[0] } // Thêm ngày hiện tại để lọc ở backend
       });
 
       if (response.data.success) {
-        // Format the data to match the component's expected structure
-        const formattedPatientsPromises = response.data.waitingPatients.map(async appointment => {
-          // Extract patient data from the API response
-          const patient = appointment.patient || {};
-          const appointmentDate = appointment.timeSlot ?
-            new Date(appointment.timeSlot.seconds * 1000) : new Date();
-
-          // Lấy thông tin từ dữ liệu bệnh nhân từ API backend
-          let patientName =  patient.fullName || patient.displayName || patient.name || "Không có tên";
-          let patientDoB = patient.DoB || "N/A";
-          let patientGender = patient.gender || "N/A";
-          let patientAddress = patient.address || "N/A";
-          let patientCCCD = patient.CCCD || "N/A";
-          let patientPhone = patient.phone || patient.phoneNumber || "N/A";
-
-          // Tạo đối tượng để lưu trữ thông tin sức khỏe từ Health Profile
-          const healthProfileData = patient.healthProfile || {};
-
-          console.log(`Dữ liệu bệnh nhân từ API:`, patient);
-
-          return {
-            id: appointment.id,
-            patientId: appointment.parentId,
-            patientName: patientName,
-            patientDoB: patientDoB,
-            patientGender: patientGender,
-            patientAddress: patientAddress,
-            patientCCCD: patientCCCD,
-            patientPhone: patientPhone,
-            symptomsInitial: appointment.symptom || "",
-            appointmentDate: appointmentDate,
-            appointmentTimeSlot: appointmentDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
-            status: appointment.status,
-            scheduleId: appointment.scheduleId || appointment.id,
-            patient: {
-              ...patient,
-              healthProfile: healthProfileData
-            }
-          };
-        });
-
-        // Giải quyết tất cả promises để lấy danh sách bệnh nhân đã được định dạng
-        const formattedPatients = await Promise.all(formattedPatientsPromises);
-        setWaitingPatients(formattedPatients);
+        // Data from API is already formatted as expected
+        setWaitingPatients(response.data.waitingPatients);
+        console.log(`Fetched ${response.data.waitingPatients.length} waiting patients.`);
       } else {
         setWaitingPatients([]);
+        console.error("API did not return success for waiting patients:", response.data.error);
       }
     } catch (error) {
-      console.error("Lỗi khi tải danh sách bệnh nhân chờ:", error);
-
-      // Fallback to direct Firestore query if API fails
-      console.log("API failed. Attempting fallback to direct Firestore method...");
-
-      const today = new Date();
-      const startOfDay = new Date(today.setHours(0, 0, 0, 0));
-      const endOfDay = new Date(today.setHours(23, 59, 59, 999)); 
-      try {
-        const appointmentsRef = collection(db, "HisSchedule");
-        const appointmentQuery = query(
-          appointmentsRef,
-          where("doctorID", "==", currentDoctor.id),
-          where("status", "==", "wait"),
-          where("examinationDate", ">=", Timestamp.fromDate(startOfDay)),
-          where("examinationDate", "<=", Timestamp.fromDate(endOfDay)),
-          //orderBy("timeOrder", "asc") // sắp xếp luôn trong query nếu được
-        );
-
-        const appointmentSnapshot = await getDocs(appointmentQuery);
-        const appointments = [];
-        const patientsPromises = [];
-
-        appointmentSnapshot.forEach((doc) => {
-          const data = doc.data();
-          if (data.parentId) {
-            const patientPromise = getDocs(query(collection(db, "users"), where("uid", "==", data.parentId)))
-              .then(async patientSnapshot => {
-                if (!patientSnapshot.empty) {
-                  const patientData = patientSnapshot.docs[0].data();
-                  // Khởi tạo dữ liệu bệnh nhân từ thông tin cơ bản
-                  let patientName = patientData.displayName || patientData.name || patientData.fullName || "Không có tên";
-                  let patientDoB = "N/A";
-                  let patientGender = patientData.gender || "N/A";
-                  let patientAddress = "N/A";
-                  let patientCCCD = "N/A";
-                  let patientPhone = patientData.phoneNumber || "N/A";
-
-                  // Khởi tạo đối tượng để lưu trữ thông tin sức khỏe
-                  let healthProfile = {
-                    heartRate: '',
-                    height: '',
-                    leftEye: '',
-                    rightEye: '',
-                    weight: '',
-                    medicalHistory: ''
-                  };
-
-                  // Luôn cố gắng lấy thông tin từ subcollection Profile/NormalProfile nếu có ID
-                  try {
-                    console.log(`Fallback: Đang tìm thông tin bệnh nhân từ Profile/NormalProfile cho ID: ${data.parentId}`);
-                    const normalProfileDoc = await getDoc(doc(db, "users", data.parentId, "Profile", "NormalProfile"));
-                    if (normalProfileDoc.exists()) {
-                      // Process normal profile data...
-                      const normalProfileData = normalProfileDoc.data();
-
-                      // Update fields with available data
-                      if (normalProfileData.Name) patientName = normalProfileData.Name;
-                      if (normalProfileData.DoB) patientDoB = normalProfileData.DoB;
-                      if (normalProfileData.Gender) patientGender = normalProfileData.Gender;
-                      if (normalProfileData.Address) patientAddress = normalProfileData.Address;
-                      if (normalProfileData.CCCD) patientCCCD = normalProfileData.CCCD;
-                      if (normalProfileData.Phone) patientPhone = normalProfileData.Phone;
-                    }
-
-                    // Lấy thông tin từ HealthProfile
-                    const healthProfileDoc = await getDoc(doc(db, "users", data.parentId, "Profile", "HealthProfile"));
-                    if (healthProfileDoc.exists()) {
-                      const healthProfileData = healthProfileDoc.data();
-
-                      // Update health profile fields
-                      if (healthProfileData.HeartRate) healthProfile.heartRate = healthProfileData.HeartRate;
-                      if (healthProfileData.Height) healthProfile.height = healthProfileData.Height;
-                      if (healthProfileData.LeftEye) healthProfile.leftEye = healthProfileData.LeftEye;
-                      if (healthProfileData.RightEye) healthProfile.rightEye = healthProfileData.RightEye;
-                      if (healthProfileData.Weight) healthProfile.weight = healthProfileData.Weight;
-                      if (healthProfileData.medicalHistory) healthProfile.medicalHistory = healthProfileData.medicalHistory;
-                    }
-                  } catch (profileError) {
-                    console.error(`Fallback: Lỗi khi lấy thông tin profile:`, profileError);
-                  }
-
-                  let appointmentTime = new Date();
-                  try {
-                    if (data.timeOrder instanceof Timestamp) {
-                      appointmentTime = data.timeOrder.toDate();
-                    }
-                  } catch (error) {
-                    console.error("Lỗi khi xử lý timeOrder:", error);
-                  }
-
-                  appointments.push({
-                    id: doc.id,
-                    patientId: data.parentId,
-                    patientName: patientName,
-                    patientDoB: patientDoB,
-                    patientGender: patientGender,
-                    patientAddress: patientAddress,
-                    patientCCCD: patientCCCD,
-                    patientPhone: patientPhone,
-                    symptomsInitial: data.symptom || "",
-                    appointmentDate: appointmentTime,
-                    appointmentTimeSlot: appointmentTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
-                    status: data.status,
-                    scheduleId: data.scheduleId || doc.id,
-                    patient: {
-                      healthProfile: healthProfile
-                    }
-                  });
-                }
-              })
-              .catch(error => {
-                console.error("Lỗi khi lấy thông tin bệnh nhân:", error);
-              });
-            patientsPromises.push(patientPromise);
-          }
-        });
-
-        await Promise.all(patientsPromises);
-
-        appointments.sort((a, b) => a.appointmentDate - b.appointmentDate);
-        setWaitingPatients(appointments);
-      } catch (fallbackError) {
-        console.error("Fallback method also failed:", fallbackError);
-      }
+      console.error("Lỗi khi tải danh sách bệnh nhân chờ từ API:", error);
+      alert("Không thể tải danh sách bệnh nhân chờ. Vui lòng thử lại sau.");
+      setWaitingPatients([]); // Clear list on error
     }
-  };
+  }, [currentDoctor.id]); // Dependency array cho useCallback
+
+  // Fetch waiting patients list on component mount and when doctorId changes
   useEffect(() => {
-  const fetchMedicineSearch = async () => {
-    if (!medicineSearchTerm.trim()) {
-      setMedicineSearchResults([]);
-      return;
-    }
-
-    setIsSearchingMedicine(true);
-    try {
-      const response = await axios.get(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SEARCH_MEDICINE}`, {
-        params: { q: medicineSearchTerm }
-      });
-      setMedicineSearchResults(response.data || []);
-    } catch (error) {
-      console.error("Lỗi khi tìm kiếm thuốc:", error);
-      setMedicineSearchResults([]);
-    } finally {
-      setIsSearchingMedicine(false);
-    }
-  };
-
-  const debounceTimeout = setTimeout(() => {
-    fetchMedicineSearch();
-  }, 500); // debounce 500ms
-
-  return () => clearTimeout(debounceTimeout);
-}, [medicineSearchTerm]);
-
-
-  // Fetch waiting patients list
-  useEffect(() => {
-    let isMounted = true;
-
-    // Call the fetchWaitingPatients function to get the data
     fetchWaitingPatients();
+    // Có thể thêm polling nếu muốn tự động làm mới danh sách (ví dụ mỗi 30 giây)
+    // const pollingInterval = setInterval(fetchWaitingPatients, 30000); // Poll every 30 seconds
+    // return () => clearInterval(pollingInterval);
+  }, [fetchWaitingPatients]); // Dependency array chỉ cần fetchWaitingPatients
 
-    return () => {
-      isMounted = false;
-      // clearInterval(pollingInterval);
+  // Fetch medicine search results
+  useEffect(() => {
+    const fetchMedicineSearch = async () => {
+      if (!medicineSearchTerm.trim()) {
+        setMedicineSearchResults([]);
+        return;
+      }
+
+      setIsSearchingMedicine(true);
+      try {
+        const response = await axios.get(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SEARCH_MEDICINE}`, {
+          params: { q: medicineSearchTerm }
+        });
+        setMedicineSearchResults(response.data || []);
+      } catch (error) {
+        console.error("Lỗi khi tìm kiếm thuốc:", error);
+        setMedicineSearchResults([]);
+      } finally {
+        setIsSearchingMedicine(false);
+      }
     };
-  }, [currentDoctor.id]);
-  
+
+    const debounceTimeout = setTimeout(() => {
+      fetchMedicineSearch();
+    }, 500); // debounce 500ms
+
+    return () => clearTimeout(debounceTimeout);
+  }, [medicineSearchTerm]);
+
+
   // Event handlers
   const handleSearch = (e) => setSearchTerm(e.target.value);
 
   const filteredPatients = waitingPatients.filter(patient =>
     patient.patientName?.toLowerCase().includes(searchTerm.toLowerCase())
-  ); const handleSelectAppointment = async (appointment) => {
+  );
+
+  const handleSelectAppointment = (appointment) => {
     setSelectedAppointment(appointment);
 
-    // Check patient data structure for debugging if we have issues
-    if (appointment.patientId) {
-      try {
-        const structureData = await checkPatientDataStructure(appointment.patientId);
-        console.log('Patient data structure check result:', structureData);
-      } catch (error) {
-        console.error('Error checking patient structure:', error);
-      }
-    }
-    const handleSelectSearchedMedicine = (medicine) => {
-      const updatedMedications = [...medications];
-
-      // Cập nhật thông tin vào dòng thuốc đang hoạt động (active)
-      updatedMedications[activeMedicationIndex] = {
-        ...updatedMedications[activeMedicationIndex], // Giữ lại các giá trị cũ nếu có
-        medicineName: medicine.name || '', // Giả định field trong DB là 'name'
-        usageNotes: medicine.usage || '',   // Giả định field trong DB là 'usage'
-        isFromDatabase: true, // Đánh dấu thuốc này là từ database
-        medicineId: medicine.id // Lưu lại ID của thuốc từ database
-      };
-
-      setMedications(updatedMedications);
-
-      // Xóa kết quả tìm kiếm và từ khóa sau khi đã chọn
-      setMedicineSearchTerm('');
-      setMedicineSearchResults([]);
-    };
-    // Handle patient data from the new array structure
-    // PatientNormal array structure: [Name, DoB, Phone, Gender, CCCD, Address]
-    // HealthProfile array structure: [HeartRate, Height, Eye, Weight, medicalHistory]
-
-    let patientName = appointment.patientName || '';
-    let patientDoB = appointment.patientDoB || '';
-    let patientGender = appointment.patientGender || '';
-    let patientAddress = appointment.patientAddress || '';
-    let patientCCCD = appointment.patientCCCD || '';
-    let patientPhone = appointment.patientPhone || '';
-    let initialSymptoms = appointment.symptomsInitial || '';
-
-    let healthProfile = {
-      heartRate: '',
-      height: '',
-      leftEye: '', // This will be replaced with 'eye' in the new structure
-      weight: '',
-      medicalHistory: ''
-    };
-
-    // Handle ProfileNormal array
-    if (appointment.patient && appointment.patient.ProfileNormal && Array.isArray(appointment.patient.ProfileNormal)) {
-      console.log('Using ProfileNormal array:', appointment.patient.ProfileNormal);
-      if (appointment.patient.ProfileNormal.length > 0) {
-        patientName = appointment.patient.ProfileNormal[0] || patientName;
-      }
-      if (appointment.patient.ProfileNormal.length > 1) {
-        patientDoB = appointment.patient.ProfileNormal[1] || patientDoB;
-      }
-      if (appointment.patient.ProfileNormal.length > 2) {
-        patientPhone = appointment.patient.ProfileNormal[2] || patientPhone;
-      }
-      if (appointment.patient.ProfileNormal.length > 3) {
-        patientGender = appointment.patient.ProfileNormal[3] || patientGender;
-      }
-      if (appointment.patient.ProfileNormal.length > 4) {
-        patientCCCD = appointment.patient.ProfileNormal[4] || patientCCCD;
-      }
-      if (appointment.patient.ProfileNormal.length > 5) {
-        patientAddress = appointment.patient.ProfileNormal[5] || patientAddress;
-      }
-    }
-    // Handle HealthProfile array
-    if (appointment.patient && appointment.patient.HealthProfile && Array.isArray(appointment.patient.HealthProfile)) {
-      console.log('Using HealthProfile array:', appointment.patient.HealthProfile);
-      if (appointment.patient.HealthProfile.length > 0) {
-        healthProfile.heartRate = appointment.patient.HealthProfile[0] || healthProfile.heartRate;
-      }
-      if (appointment.patient.HealthProfile.length > 1) {
-        healthProfile.height = appointment.patient.HealthProfile[1] || healthProfile.height;
-      }
-      if (appointment.patient.HealthProfile.length > 2) {
-        // Using Eye field instead of leftEye in the new structure
-        healthProfile.leftEye = appointment.patient.HealthProfile[2] || healthProfile.leftEye;
-      }
-      if (appointment.patient.HealthProfile.length > 3) {
-        healthProfile.weight = appointment.patient.HealthProfile[3] || healthProfile.weight;
-      }
-      if (appointment.patient.HealthProfile.length > 4) {
-        healthProfile.medicalHistory = appointment.patient.HealthProfile[4] || healthProfile.medicalHistory;
-      }
-    } else if (appointment.patient && appointment.patient.healthProfile) {
-      // Fallback to old structure
-      healthProfile = {
-        heartRate: appointment.patient.healthProfile.heartRate || '',
-        height: appointment.patient.healthProfile.height || '',
-        leftEye: appointment.patient.healthProfile.Eye || appointment.patient.healthProfile.leftEye || '',
-        weight: appointment.patient.healthProfile.weight || '',
-        medicalHistory: appointment.patient.healthProfile.medicalHistory || ''
-      };
-    }
+    // Dữ liệu bệnh nhân đã được định dạng chuẩn từ API backend
+    const patientData = appointment.patient || {};
+    const healthProfileData = patientData.healthProfile || {};
 
     setPatientInfo({
-      name: patientName,
-      DoB: patientDoB,
-      gender: patientGender,
-      address: patientAddress,
-      cccd: patientCCCD,
-      phone: patientPhone,
-      symptomsInitial: initialSymptoms,
-      healthProfile: healthProfile
+      name: appointment.patientName || patientData.fullName || patientData.displayName || '',
+      DoB: appointment.patientDoB || patientData.DoB || '',
+      gender: appointment.patientGender || patientData.gender || '',
+      address: appointment.patientAddress || patientData.address || '',
+      cccd: appointment.patientCCCD || patientData.CCCD || '',
+      phone: appointment.patientPhone || patientData.phone || patientData.phoneNumber || '',
+      symptomsInitial: appointment.symptom || '', // Sử dụng symptom từ appointment object
+      healthProfile: {
+        heartRate: healthProfileData.heartRate || '',
+        height: healthProfileData.height || '',
+        leftEye: healthProfileData.Eye || healthProfileData.leftEye || '', // Backend trả về Eye
+        rightEye: healthProfileData.rightEye || '', // Giữ lại để tương thích nếu frontend vẫn dùng
+        weight: healthProfileData.weight || '',
+        medicalHistory: healthProfileData.medicalHistory || ''
+      }
     });
-    setSymptomsCurrent(appointment.symptomsInitial || '');
+    setSymptomsCurrent(appointment.symptom || ''); // symptom là initial symptoms từ appointment
+    setDiagnosis(''); // Reset chẩn đoán khi chọn bệnh nhân mới
+    setMedications([{ medicineName: '', dosage: '', quantity: '', frequency: '', usageNotes: '' }]); // Reset đơn thuốc
+    setNotes(''); // Reset ghi chú
+    setReExamDate(''); // Reset ngày tái khám
   };
+
   const resetForm = () => {
     setSelectedAppointment(null);
     setPatientInfo({
@@ -440,6 +197,7 @@ const MedicalExam = () => {
     setNotes('');
     setReExamDate('');
   };
+
   const handleSelectSearchedMedicine = (medicine) => {
     const updatedMedications = [...medications];
 
@@ -447,7 +205,7 @@ const MedicalExam = () => {
     updatedMedications[activeMedicationIndex] = {
       ...updatedMedications[activeMedicationIndex], // Giữ lại các giá trị cũ nếu có
       medicineName: medicine.name || '', // Giả định field trong DB là 'name'
-      usageNotes: medicine.usage || '',   // Giả định field trong DB là 'usage'
+      usageNotes: medicine.usage || '',  // Giả định field trong DB là 'usage'
       isFromDatabase: true, // Đánh dấu thuốc này là từ database
       medicineId: medicine.id // Lưu lại ID của thuốc từ database
     };
@@ -460,26 +218,25 @@ const MedicalExam = () => {
   };
 
   const handleMedicationChange = (index, e) => {
-  const { name, value } = e.target;
-  const updatedMedications = [...medications];
+    const { name, value } = e.target;
+    const updatedMedications = [...medications];
 
-  // Ngăn sửa thuốc từ DB
-  if (updatedMedications[index].isFromDatabase &&
+    // Ngăn sửa thuốc từ DB
+    if (updatedMedications[index].isFromDatabase &&
       (name === 'medicineName' || name === 'usageNotes')) {
-    console.log('Không thể chỉnh sửa thông tin thuốc từ database');
-    return;
-  }
+      console.log('Không thể chỉnh sửa thông tin thuốc từ database');
+      return;
+    }
 
-  // Ghi nhận dòng đang nhập + từ khóa tìm thuốc
-  if (name === "medicineName") {
-    setActiveMedicationIndex(index);
-    setMedicineSearchTerm(value);
-  }
+    // Ghi nhận dòng đang nhập + từ khóa tìm thuốc
+    if (name === "medicineName") {
+      setActiveMedicationIndex(index);
+      setMedicineSearchTerm(value);
+    }
 
-  updatedMedications[index] = { ...updatedMedications[index], [name]: value };
-  setMedications(updatedMedications);
-};
-
+    updatedMedications[index] = { ...updatedMedications[index], [name]: value };
+    setMedications(updatedMedications);
+  };
 
   const addMedication = () => {
     setMedications([...medications, { medicineName: '', dosage: '', quantity: '', frequency: '', usageNotes: '' }]);
@@ -490,6 +247,7 @@ const MedicalExam = () => {
     const updatedMedications = medications.filter((_, i) => i !== index);
     setMedications(updatedMedications);
   };
+
   // Function to save examination data using the backend API
   const saveExamination = async () => {
     // Validate required fields
@@ -510,15 +268,13 @@ const MedicalExam = () => {
       return;
     }
 
-    setIsSaving(true);    // Format medications to match backend expectation
-    // Move this definition outside the try block to make it accessible in the catch block
+    setIsSaving(true);
     const formattedMedications = validMedications.map(med => ({
       medicineName: med.medicineName.trim(),
       dosage: med.dosage || "",
       quantity: med.quantity || "",
       frequency: med.frequency || "",
       usageNotes: med.usageNotes || "",
-      // Include database fields if the medicine is from the database
       ...(med.isFromDatabase && {
         medicineId: med.medicineId,
         isFromDatabase: true
@@ -529,7 +285,7 @@ const MedicalExam = () => {
       // Prepare data for API call
       const examinationData = {
         appointmentId: selectedAppointment ? selectedAppointment.id : "",
-        patientId: selectedAppointment ? selectedAppointment.patientId : `new_patient_${Date.now()}`,
+        patientId: selectedAppointment ? selectedAppointment.patientId : `new_patient_${Date.now()}`, // Fallback ID if no selectedAppointment
         doctorId: currentDoctor.id,
         diagnosis: diagnosis || "",
         symptoms: symptomsCurrent || "",
@@ -538,7 +294,6 @@ const MedicalExam = () => {
         medications: formattedMedications
       };
 
-      // Log request data for debugging
       console.log("Sending data to API:", examinationData);
 
       // Make API request
@@ -549,12 +304,12 @@ const MedicalExam = () => {
         }
       });
 
-      // Log success response
       console.log("API response:", response.data);
 
       if (response.data.success || response.status === 201) {
         // Update UI after successful save
         if (selectedAppointment) {
+          // Remove the completed appointment from the waiting list
           setWaitingPatients(prev => prev.filter(p => p.id !== selectedAppointment.id));
         }
 
@@ -565,11 +320,9 @@ const MedicalExam = () => {
         throw new Error(response.data.error || "Không thể lưu đơn thuốc");
       }
     } catch (error) {
-      // Handle API errors
       console.error('Lỗi khi lưu kết quả khám:', error);
 
       let errorMessage = "Đã xảy ra lỗi khi lưu kết quả khám.";
-
       if (error.response) {
         console.error("API error response:", error.response.data);
         errorMessage = `Lỗi từ server: ${error.response.data.error || error.response.statusText}`;
@@ -577,52 +330,7 @@ const MedicalExam = () => {
         console.error("API request error (no response):", error.request);
         errorMessage = "Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng và thử lại sau.";
       }
-
-      // Fallback to direct Firestore method if API fails
-      console.log("API failed. Attempting fallback to direct Firestore method...");
-
-      try {
-        // Create a batch to handle multiple write operations
-        const batch = writeBatch(db);
-
-        // Create examination document
-        const examinationRef = doc(collection(db, "examinations"));
-        const examinationData = {
-          appointmentId: selectedAppointment ? selectedAppointment.id : "",
-          diagnosis: diagnosis || "",
-          doctorId: currentDoctor.id,
-          examinationDate: Timestamp.now(),
-          notes: notes || "",
-          patientId: selectedAppointment ? selectedAppointment.patientId : `new_patient_${Date.now()}`,
-          reExamDate: reExamDate ? Timestamp.fromDate(new Date(reExamDate)) : null,
-          symptoms: symptomsCurrent || "",
-          medications: formattedMedications // Save medications as an array
-        };
-
-        batch.set(examinationRef, examinationData);
-
-        // Update appointment status if an appointment was selected
-        if (selectedAppointment && selectedAppointment.scheduleId) {
-          const appointmentRef = doc(db, "HisSchedule", selectedAppointment.scheduleId);
-          batch.update(appointmentRef, { status: "completed" });
-        }
-
-        // Commit the batch
-        await batch.commit();
-
-        // Update UI after successful save
-        if (selectedAppointment) {
-          setWaitingPatients(prev => prev.filter(p => p.id !== selectedAppointment.id));
-        }
-
-        // Show success message and reset form
-        alert('Đã lưu kết quả khám và đơn thuốc thành công (sử dụng phương thức fallback)');
-        resetForm();
-
-      } catch (fallbackError) {
-        console.error("Fallback method also failed:", fallbackError);
-        alert(`${errorMessage}\n\nPhương pháp dự phòng cũng thất bại: ${fallbackError.message}`);
-      }
+      alert(errorMessage);
     } finally {
       setIsSaving(false);
     }
@@ -631,47 +339,26 @@ const MedicalExam = () => {
   const printPrescription = () => {
     alert("Chức năng in chi tiết sẽ được phát triển sau. Tạm thời sẽ in toàn bộ trang.");
     window.print();
-  };  // Function to view patient's medical record
+  };
+
+  // Function to view patient's medical record
   const viewPatientRecord = () => {
     if (!selectedAppointment || !selectedAppointment.patientId) {
       alert("Không thể truy cập hồ sơ bệnh nhân. Vui lòng kiểm tra ID bệnh nhân.");
       return;
     }
-
-    // Automatically refresh the waiting patients list when viewing the profile
-     fetchWaitingPatients();
-
     // Show the patient record modal
     setShowPatientRecord(true);
     console.log(`Opening patient record for: ${selectedAppointment.patientId}`);
   };
+
   // Function to close the patient record modal
   const closePatientRecord = () => {
     setShowPatientRecord(false);
-
-     fetchWaitingPatients();
-    // Refresh the waiting patients list when closing the profile
+    // Sau khi đóng modal, làm mới danh sách bệnh nhân chờ
+    fetchWaitingPatients();
   };
 
-  // Debug function to check patient data structure
-  const checkPatientDataStructure = async (patientId) => {
-    try {
-      console.log('Checking data structure for patient:', patientId);
-      const apiUrl = `${API_CONFIG.BASE_URL}/api/medicalExam/check-patient-structure/${patientId}`;
-      const response = await axios.get(apiUrl);
-
-      if (response.data.success) {
-        console.log('Patient data structure:', response.data.dataStructure);
-        return response.data.dataStructure;
-      } else {
-        console.error('Error checking patient structure:', response.data.error);
-        return null;
-      }
-    } catch (error) {
-      console.error('Exception when checking patient structure:', error);
-      return null;
-    }
-  };
   // Render the split view with both waiting list and examination form
   return (
     <>
@@ -693,7 +380,8 @@ const MedicalExam = () => {
             <div className="patient-count" title={`${filteredPatients.length} bệnh nhân đang chờ khám`}>
               <span className="count-number">{filteredPatients.length}</span>
             </div>
-          </div>          {/* Patient list */}
+          </div>
+          {/* Patient list */}
           <div className="waiting-patients-list">
             {filteredPatients.length > 0 ? (
               filteredPatients.map(appointment => (
@@ -703,14 +391,15 @@ const MedicalExam = () => {
                   onClick={() => handleSelectAppointment(appointment)}
                 >
                   <div className="patient-name">{appointment.patientName}</div>
+                  <div className="patient-time">{appointment.appointmentTimeSlot}</div> {/* Thêm hiển thị thời gian */}
                 </div>
               ))
             ) : (
               <div className="no-patients">
-                <p>Đang tải danh sách chờ</p>
-                <button className="refresh-btn" onClick={() => fetchWaitingPatients()}>
+                <p>Không có bệnh nhân nào trong danh sách chờ.</p>
+                <button className="refresh-btn" onClick={fetchWaitingPatients}>
                   <FaSyncAlt /> Làm mới danh sách
-                </button>``
+                </button>
               </div>
             )}
           </div>
@@ -740,7 +429,7 @@ const MedicalExam = () => {
                 <h3>Thông tin bệnh nhân</h3>
                 <div className="patient-info-fields">
                   <p><strong>Tên:</strong> {patientInfo.name || "Chưa có thông tin"}</p>
-                  {/* <p><strong>Ngày sinh:</strong> {patientInfo.DoB || "N/A"}</p> */}
+                  <p><strong>Ngày sinh:</strong> {patientInfo.DoB || "N/A"}</p>
                   <p><strong>Giới tính:</strong> {patientInfo.gender || "Không xác định"}</p>
                   <p><strong>CCCD:</strong> {patientInfo.cccd || "N/A"}</p>
                   <p><strong>Số điện thoại:</strong> {patientInfo.phone || "N/A"}</p>
@@ -750,7 +439,8 @@ const MedicalExam = () => {
                 <button className="view-record-btn" onClick={viewPatientRecord}>
                   <FaHistory /> Xem hồ sơ bệnh án
                 </button>
-              </div>              {/* Thông tin sức khỏe từ HealthProfile */}
+              </div>
+              {/* Thông tin sức khỏe từ HealthProfile */}
               <div className="section health-profile-display">
                 <h3>Thông tin sức khỏe</h3>
                 <div className="health-profile-fields">
@@ -786,72 +476,67 @@ const MedicalExam = () => {
                 />
               </div>
 
-              {/* Prescription section */}             
+              {/* Prescription section */}
               <div className="section prescription-section">
                 <h3>Đơn thuốc</h3>
 
-                {/* ===== KHỐI TÌM KIẾM THUỐC MỚI ===== */}
+                {/* Search Medicine Input (Always visible, tied to active medication row) */}
                 <div className="medicine-search-container">
                   <FaSearch className="search-icon" />
-                  {/* <input
+                  <input
                     type="text"
-                    placeholder="Tìm kiếm thuốc trong danh mục..."                    className="form-control medicine-search-input"
+                    placeholder="Tìm kiếm thuốc trong danh mục..."
+                    className="form-control medicine-search-input"
                     value={medicineSearchTerm}
                     onChange={(e) => setMedicineSearchTerm(e.target.value)}
-                  /> */}
+                  />
                   {isSearchingMedicine && <div className="spinner-small"></div>}
 
                   {/* Hiển thị kết quả tìm kiếm */}
-                  {/* {medicineSearchResults.length > 0 && (
-                    <div className="medicine-search-results">
-                      {medicineSearchResults.map((med) => (
-                        
-                        <div
-                          key={med.id}
-                          className="result-item"
-                          onClick={() => handleSelectSearchedMedicine(med)}
-                        >
-                         
-                          <div className="result-medicine-name">{med.name}</div>
-                          <div className="result-medicine-usage">{med.usage || 'Không có hướng dẫn sử dụng'}</div>
+                  {medicineSearchTerm.trim() !== '' && ( // Chỉ hiển thị khi có searchTerm
+                    <div className="autocomplete-results">
+                      {medicineSearchResults.length > 0 ? (
+                        medicineSearchResults.map((med) => (
+                          <div
+                            key={med.id}
+                            className="autocomplete-item"
+                            onClick={() => handleSelectSearchedMedicine(med)}
+                          >
+                            <strong>{med.name}</strong> – {med.usage || 'Không có hướng dẫn'}
+                          </div>
+                        ))
+                      ) : !isSearchingMedicine ? (
+                        <div className="no-results">
+                          <p>Không tìm thấy thuốc "<strong>{medicineSearchTerm}</strong>"</p>
+                          <button
+                            onClick={() => {
+                              // Thêm thuốc thủ công vào dòng thuốc hiện tại
+                              const updatedMedications = [...medications];
+                              updatedMedications[activeMedicationIndex] = {
+                                ...updatedMedications[activeMedicationIndex],
+                                medicineName: medicineSearchTerm.trim(),
+                                isFromDatabase: false,
+                                // Thêm một số giá trị mặc định hợp lý nếu có thể đoán được
+                                ...(medicineSearchTerm.toLowerCase().includes('amoxicillin') && {
+                                  usageNotes: "Điều trị nhiễm trùng",
+                                  dosage: "500mg",
+                                  frequency: "3 lần/ngày"
+                                })
+                              };
+                              setMedications(updatedMedications);
+                              setMedicineSearchTerm('');
+                              setMedicineSearchResults([]);
+                            }}
+                          >
+                            Thêm "{medicineSearchTerm}" thủ công
+                          </button>
                         </div>
-                      ))}
+                      ) : (
+                        <p>Đang tìm kiếm...</p>
+                      )}
                     </div>
-                  )} */}
-                 
-                    {/* <div className="medicine-search-results"> */}
-                      {/* <div className="no-results">
-                        <p>Không tìm thấy thuốc "<strong>{medicineSearchTerm}</strong>"</p>
-                        <small>Vui lòng thử từ khóa khác hoặc thêm thuốc mới</small>
-                        <button 
-                          className="add-manual-btn"
-                          onClick={() => {
-                            // Thêm thuốc thủ công vào dòng thuốc hiện tại
-                            const updatedMedications = [...medications];
-                            updatedMedications[activeMedicationIndex] = {
-                              ...updatedMedications[activeMedicationIndex],
-                              medicineName: medicineSearchTerm.trim(),
-                              isFromDatabase: false,
-                              // Thêm một số giá trị mặc định hợp lý cho thuốc Amoxicillin
-                              ...(medicineSearchTerm.toLowerCase().includes('amoxicillin') && {
-                                usageNotes: "Điều trị nhiễm trùng",
-                                dosage: "500mg",
-                                frequency: "3 lần/ngày"
-                              })
-                            };
-                            setMedications(updatedMedications);
-                            setMedicineSearchTerm('');
-                            setMedicineSearchResults([]);
-                          }}
-                        >
-                          Thêm "{medicineSearchTerm}" thủ công
-                        </button>
-                      </div> */}
-                   {/* </div> */}
-                  
+                  )}
                 </div>
-                {/* ===== KẾT THÚC KHỐI TÌM KIẾM ===== */}
-
 
                 <div className="medication-header">
                   <div>Tên thuốc</div>
@@ -860,7 +545,7 @@ const MedicalExam = () => {
                   <div>Tần suất/Cách dùng</div>
                   <div>Ghi chú thuốc</div>
                   <div></div>
-                </div>    
+                </div>
                 {medications.map((med, index) => (
                   <div
                     className={`medication-row ${med.isFromDatabase ? 'database-medicine' : ''} ${index === activeMedicationIndex ? 'active-medication' : ''}`}
@@ -874,48 +559,11 @@ const MedicalExam = () => {
                         name="medicineName"
                         placeholder="Tên thuốc"
                         value={med.medicineName}
-                         onChange={(e) => handleMedicationChange(index, e)}
-    onFocus={() => setActiveMedicationIndex(index)}
-    className="form-control"
-    readOnly={med.isFromDatabase}
+                        onChange={(e) => handleMedicationChange(index, e)}
+                        onFocus={() => setActiveMedicationIndex(index)}
+                        className="form-control"
+                        readOnly={med.isFromDatabase}
                       />
-                       {/* 🔽 Gợi ý autocomplete hiển thị ngay dưới input này */}
-  {index === activeMedicationIndex && medicineSearchTerm.trim() !== '' && (
-    <div className="autocomplete-results">
-      {medicineSearchResults.length > 0 ? (
-        medicineSearchResults.map((med) => (
-          <div
-            key={med.id}
-            className="autocomplete-item"
-            onClick={() => handleSelectSearchedMedicine(med)}
-          >
-            <strong>{med.name}</strong> – {med.usage || 'Không có hướng dẫn'}
-          </div>
-        ))
-      ) : !isSearchingMedicine ? (
-        <div className="no-results">
-          <p>Không tìm thấy thuốc "<strong>{medicineSearchTerm}</strong>"</p>
-          <button
-            onClick={() => {
-              const updatedMedications = [...medications];
-              updatedMedications[activeMedicationIndex] = {
-                ...updatedMedications[activeMedicationIndex],
-                medicineName: medicineSearchTerm.trim(),
-                isFromDatabase: false,
-              };
-              setMedications(updatedMedications);
-              setMedicineSearchTerm('');
-              setMedicineSearchResults([]);
-            }}
-          >
-            Thêm thủ công
-          </button>
-        </div>
-      ) : (
-        <p>Đang tìm kiếm...</p>
-      )}
-    </div>
-  )}
                     </div>
                     <input
                       type="text"
@@ -948,7 +596,7 @@ const MedicalExam = () => {
                       value={med.usageNotes}
                       onChange={(e) => handleMedicationChange(index, e)}
                       className="form-control"
-                      readOnly={med.isFromDatabase} // Nếu là thuốc từ database thì không cho chỉnh sửa hướng dẫn
+                      readOnly={med.isFromDatabase}
                     />
                     <button
                       className="remove-btn"

@@ -89,10 +89,9 @@ alert("Đăng nhập thất bại!");
         <form onSubmit={handleLogin}>
           <input type="email" name="email" placeholder="UserName" required />
           <input type="password" name="password" placeholder="PassWord" required />
-          <label><input type="checkbox" name="remember" /> Remember Account</label>
           <button type="submit">Login</button>
           
-          <p><a href="#">Forgot PassWord?</a></p>
+          
           <hr />
          
         </form>
