@@ -278,40 +278,6 @@ setRooms(prevRooms => {
       console.error(err);
     }
   };
-  // const fetchSchedules = async () => {
-  //   const res = await fetch("http://localhost:5000/schedule2/getall");
-  //   const data = await res.json();
-
-  //   const scheduleMap = {};
-  //   const newSlotStatuses = {};
-
-  //   Object.values(data).forEach((entry) => {
-  //     const { date, ...slots } = entry;
-
-  //     const morningRooms = [];
-  //     const afternoonRooms = [];
-
-  //     Object.entries(slots).forEach(([key, value]) => {
-  //       const shift = key.startsWith("morning") ? "Morning" : "Afternoon";
-  //       const room = value.room;
-  //       const isoDate = date; // date should be in ISO format already
-
-  //       // Ghi lại các phòng sáng/chiều
-  //       if (shift === "Morning") morningRooms.push(room);
-  //       else afternoonRooms.push(room);
-
-  //       // Đặt trạng thái "open" cho những ca/phòng có trong dữ liệu
-  //       const slotKey = `${isoDate}_${shift}${room}`;
-  //       newSlotStatuses[slotKey] = 'open';
-  //     });
-
-  //     scheduleMap[date] = { morningRooms, afternoonRooms };
-  //   });
-
-  //   setSavedSchedules(scheduleMap);
-  //   setSlotStatuses(newSlotStatuses); // cập nhật trạng thái các ca
-  // };
-
 
 
   useEffect(() => {
@@ -396,47 +362,7 @@ setRooms(prevRooms => {
 </div>
             )}
 
-            {/* {selectedDate && (
-  <div className="shift-rooms">
-    {shifts.map((shift) => (
-      <div key={shift} className="shift-group">
-        <h4>{shift}</h4>
-        {rooms.map((room) => {
-          const key = `${shift}_${room}`;
-          const status = slotStatuses[key] || 'closed';
-          return (
-            <div key={key} className={`slot-box ${status}`}>
-              <span>Phòng {room}</span>
-              {editMode && (
-                <>
-                  {status === 'open' ? (
-                    <button
-                      onClick={() =>
-                        handleCloseSlot(formatISODate(selectedDate), shift, room, prompt("Lý do đóng ca:"))
-                      }
-                      className="btn-close"
-                    >
-                      Đóng ca
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() =>
-                        handleReopenSlot(formatISODate(selectedDate), shift, room)
-                      }
-                      className="btn-open"
-                    >
-                      Mở ca
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    ))}
-  </div>
-)} */}
+          
 
             {shifts.map((shift) =>
               rooms.map((room) => {

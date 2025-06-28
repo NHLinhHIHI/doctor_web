@@ -1,0 +1,118 @@
+/* Chủ đạo: #1a9b9a */
+.medicine-list-container {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #f7fdfd;
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+
+.medicine-list-toolbar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin-top: 30px;
+}
+
+.medicine-list-toolbar input[type="text"] {
+  padding: 15px;
+  width: 300px;
+  border: 2px solid #1a9b9a;
+  border-radius: 8px;
+  outline: none;
+  font-size: 1rem;
+  transition: box-shadow 0.2s;
+}
+.medicine-list-toolbar input[type="text"]:focus {
+  box-shadow: 0 0 0 2px #1a9b9a44;
+}
+
+.medicine-list-toolbar button {
+  padding: 15px;
+  width: 180px;
+  background: #1a9b9a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.medicine-list-toolbar button:hover {
+  background: #157c7b;
+  box-shadow: 0 2px 8px #1a9b9a33;
+}
+
+.medicine-table {
+  width: 90%;
+  margin: 30px auto 0 auto;
+  border-collapse: collapse;
+  background: #fff;
+  box-shadow: 0 2px 12px #1a9b9a22;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.medicine-table th {
+  background: #1a9b9a;
+  color: #fff;
+  padding: 14px 8px;
+  font-size: 1.05rem;
+}
+.medicine-table td {
+  padding: 12px 8px;
+  border-bottom: 1px solid #e0f2f1;
+  text-align: center;
+}
+.medicine-table tr:last-child td {
+  border-bottom: none;
+}
+
+.medicine-action-btn {
+  background: #fff;
+  color: #1a9b9a;
+  border: 1.5px solid #1a9b9a;
+  border-radius: 6px;
+  padding: 6px 14px;
+  margin: 0 2px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.medicine-action-btn:hover {
+  background: #1a9b9a;
+  color: #fff;
+}
+
+.medicine-pagination {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  background: #fff;
+  padding: 7px 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px #1a9b9a33;
+  z-index: 999;
+  align-items: center;
+}
+.medicine-pagination button {
+  background: #1a9b9a;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 16px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.medicine-pagination button:disabled {
+  background: #b2dfdb;
+  color: #fff;
+  cursor: not-allowed;
+}
+.medicine-pagination span {
+  font-weight: 500;
+  color: #1a9b9a;
+}

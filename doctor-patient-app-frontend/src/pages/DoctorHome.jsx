@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./doctor.css";
-import { FaSearch, FaSignOutAlt, FaUserPlus, FaSyncAlt, FaFilter, FaHistory, FaMedkit, FaPills } from "react-icons/fa";
+import { FaSearch, FaSignOutAlt, FaSyncAlt, FaFilter, FaHistory, } from "react-icons/fa";
 import DoctorSchedule from "./DoctorSchedule";
 import MedicalExam from "./MedicalExam";
 //import Chat from "./chat";
@@ -151,7 +151,7 @@ const [chatInfo, setChatInfo] = useState(null); // { chatID, otherID }
         try {
           const response = await fetch('http://localhost:5000/', {
             method: 'GET',
-            signal: AbortSignal.timeout(3000) // 3s timeout for server status check
+            // signal: AbortSignal.timeout(3000) // 3s timeout for server status check
           });
           if (response.ok) {
             setServerStatus('online');
@@ -330,7 +330,7 @@ const [chatInfo, setChatInfo] = useState(null); // { chatID, otherID }
   }
 
   return (
-    <div className="doctor-container">
+    <div className="doctor-home-container">
       <div className="doctor-topbar">
         <span>Hello, Dr.{doctor?.name || "Doctor"}</span>
         <img
@@ -347,10 +347,10 @@ const [chatInfo, setChatInfo] = useState(null); // { chatID, otherID }
         </div>
         <nav className="doctor-nav">
           <ul>
-            <li>HOME</li>
-            <li>ABOUT</li>
-            <li>SERVICES</li>
-            <li>CONTACT</li>
+            <li onClick={() => navigate('/')}>HOME</li>
+            <li onClick={() => navigate('/about')}>ABOUT</li>
+            <li onClick={() => navigate('/services')}>SERVICES</li>
+            <li onClick={() => navigate('/contact')}>CONTACT</li>
             <li className="active">DASHBOARD</li>
           </ul>
         </nav>
@@ -382,7 +382,7 @@ const [chatInfo, setChatInfo] = useState(null); // { chatID, otherID }
               className={activeTab === "Chat" ? "active" : ""}
               onClick={() => setActiveTab("Chat")}
             >
-              chat với bệnh nhân
+              Chat với Bệnh Nhân
             </li>
             <li
               className={activeTab === "Thông tin" ? "active" : ""}
@@ -396,408 +396,391 @@ const [chatInfo, setChatInfo] = useState(null); // { chatID, otherID }
           </button>
         </aside>
 
-        {activeTab === "Hồ Sơ" && (
-          <section className="doctor-content">
-            <div className="content-header">
-              <div className="content-header-left">
-                <h2>Hồ Sơ Bệnh Nhân <span className="patient-count">({patientCount})</span></h2>
-              </div>
-              
-              <div className="search-filter-container">
-                <div className="search-bar">
-                  <input
-                    type="text"
-                    placeholder={`Tìm theo ${
-                      searchType === "name" ? "tên" : 
-                      searchType === "phone" ? "số điện thoại" : "mã bệnh nhân"
-                    }`}
-                    value={searchTerm}
-                    onChange={handleSearch}
-                  />
-                  <FaSearch className="search-icon" />
+        <main className="doctor-content">
+          {activeTab === "Hồ Sơ" && (
+            <>
+              <div className="content-header">
+                <div className="content-header-left">
+                  <h2>Hồ Sơ Bệnh Nhân <span className="patient-count">({patientCount})</span></h2>
                 </div>
                 
-                <button 
-                  className={`filter-button ${filterActive ? 'active' : ''}`}
-                  onClick={toggleFilterMenu}
-                >
-                  <FaFilter />
-                </button>
+                <div className="search-filter-container">
+                  <div className="search-bar">
+                    <input
+                      type="text"
+                      placeholder={`Tìm theo ${
+                        searchType === "name" ? "tên" : 
+                        searchType === "phone" ? "số điện thoại" : "mã bệnh nhân"
+                      }`}
+                      value={searchTerm}
+                      onChange={handleSearch}
+                    />
+                    <FaSearch className="search-icon" />
+                  </div>
+                  
                 
-                <button 
-                  className="refresh-button"
-                  onClick={() => fetchPatients()}
-                  title="Làm mới danh sách bệnh nhân"
-                >
-                  <FaSyncAlt />
-                </button>
-              </div>
-              
-              {filterActive && (
-                <div className="filter-dropdown">
-                  <div className="filter-options">
-                    <p>Tìm kiếm theo:</p>
-                    <div className="filter-option">
-                      <input 
-                        type="radio" 
-                        id="name" 
-                        name="searchType" 
-                        checked={searchType === "name"} 
-                        onChange={() => setSearchType("name")}
-                      />
-                      <label htmlFor="name">Tên</label>
-                    </div>
-                    <div className="filter-option">
-                      <input 
-                        type="radio" 
-                        id="phone" 
-                        name="searchType" 
-                        checked={searchType === "phone"} 
-                        onChange={() => setSearchType("phone")}
-                      />
-                      <label htmlFor="phone">Số điện thoại</label>
-                    </div>
-                    <div className="filter-option">
-                      <input 
-                        type="radio" 
-                        id="id" 
-                        name="searchType" 
-                        checked={searchType === "id"} 
-                        onChange={() => setSearchType("id")}
-                      />
-                      <label htmlFor="id">Mã bệnh nhân</label>
-                    </div>
-                  </div>
                 </div>
-              )}
-            </div>
-
-            {loading ? (
-              <div className="loading-indicator">
-                <div className="spinner"></div>
-                <p>Đang tải danh sách bệnh nhân...</p>
-              </div>
-            ) : error ? (
-              <div className="error-message">
-                <p>{error}</p>
-                <div className="server-status">
-                  {serverStatus === 'offline' && (
-                    <div className="server-offline-message">
-                      <p>Server hiện không hoạt động. Kiểm tra xem máy chủ đã được khởi động chưa.</p>
-                      <ul className="server-tips">
-                        <li>Đảm bảo server đã được khởi động với lệnh <code>npm start</code> hoặc <code>node server.js</code></li>
-                        <li>Kiểm tra xem server có đang chạy trên port 5000 không</li>
-                        <li>Đảm bảo không có tường lửa đang chặn kết nối</li>
-                      </ul>
-                    </div>
-                  )}
-                  <div className="retry-actions">
-                    <button 
-                      onClick={() => fetchPatients()}
-                      className="retry-button"
-                    >
-                      <FaSyncAlt /> Thử lại ngay ({retryCount})
-                    </button>
-                    
-                    {/* Auto retry countdown */}
-                    {retryCount > 0 && retryCount <= 3 && (
-                      <AutoRetry onRetry={fetchPatients} />
-                    )}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <>
-                <div className="patient-cards">                  {filteredPatients.length > 0 ? (
-                    filteredPatients.map(patient => (
-                      <div className="patient-card" key={patient.id}>
-                        <div className="card-header">
-                          <img 
-                            src={patient.profileImage || "/images/avatar.png"} 
-                            alt={patient.patientInfo?.name || patient.name || "Patient"} 
-                            className="patient-image"
-                          />
-                          <div className="patient-info">                            
-                            <h3 className="patient-name">
-                              {patient.ProfileNormal?.[0]
-                                || patient.patientInfo?.name
-                                || patient.name
-                                || "Không xác định"}
-                            </h3>                            <p className="patient-id">
-                              <strong>Mã hồ sơ:</strong> 
-                              <span>{patient.id ? `${patient.id.substring(0, 6)}...` : "N/A"}</span>
-                            </p>
-                            <p>
-                              <strong>Giới tính:</strong> 
-                              <span>
-                                {patient.ProfileNormal && Array.isArray(patient.ProfileNormal) && patient.ProfileNormal.length > 3
-                                  ? patient.ProfileNormal[3] 
-                                  : (patient.patientInfo?.gender || "Không xác định")}
-                              </span>
-                            </p>
-                            <p>
-                              <strong>Ngày sinh:</strong> 
-                              <span>
-                                {patient.ProfileNormal && Array.isArray(patient.ProfileNormal) && patient.ProfileNormal.length > 1
-                                  ? patient.ProfileNormal[1] 
-                                  : (patient.patientInfo?.birthDate || "Không xác định")}
-                              </span>
-                            </p>
-                            <p>
-                              <strong>SĐT:</strong> 
-                              <span>
-                                {patient.ProfileNormal && Array.isArray(patient.ProfileNormal) && patient.ProfileNormal.length > 2
-                                  ? patient.ProfileNormal[2] 
-                                  : (patient.patientInfo?.phone || patient.phone || "Không xác định")}
-                              </span>
-                            </p>
-                          </div>
-                        </div>                        <div className="card-actions">
-                          <button
-                            className="history-button tertiary"
-                            onClick={() => navigate(`/examination-history/${patient.id}`)}
-                            title="Xem lịch sử khám bệnh"
-                          >
-                            <FaHistory /> Lịch Sử Khám
-                          </button>
-                           <button
-   className="history-button tertiary"
-  onClick={() => handleStartChat(patient.id)}
-  title="Trò chuyện với bệnh nhân"
->
-  💬 Trò chuyện
-</button>
-
-                        </div>
+                
+                {filterActive && (
+                  <div className="filter-dropdown">
+                    <div className="filter-options">
+                      <p>Tìm kiếm theo:</p>
+                      <div className="filter-option">
+                        <input 
+                          type="radio" 
+                          id="name" 
+                          name="searchType" 
+                          checked={searchType === "name"} 
+                          onChange={() => setSearchType("name")}
+                        />
+                        <label htmlFor="name">Tên</label>
                       </div>
-                    ))
-                  ) : (
-                    <div className="no-results">
-                      <p>Không tìm thấy bệnh nhân nào</p>
-                      {searchTerm && (
-                        <button onClick={() => {
-                          setSearchTerm("");
-                          fetchPatients();
-                        }}>Xem tất cả bệnh nhân</button>
+                      <div className="filter-option">
+                        <input 
+                          type="radio" 
+                          id="phone" 
+                          name="searchType" 
+                          checked={searchType === "phone"} 
+                          onChange={() => setSearchType("phone")}
+                        />
+                        <label htmlFor="phone">Số điện thoại</label>
+                      </div>
+                      <div className="filter-option">
+                        <input 
+                          type="radio" 
+                          id="id" 
+                          name="searchType" 
+                          checked={searchType === "id"} 
+                          onChange={() => setSearchType("id")}
+                        />
+                        <label htmlFor="id">Mã bệnh nhân</label>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {loading ? (
+                <div className="loading-indicator">
+                  <div className="spinner"></div>
+                  <p>Đang tải danh sách bệnh nhân...</p>
+                </div>
+              ) : error ? (
+                <div className="error-message">
+                  <p>{error}</p>
+                  <div className="server-status">
+                    {serverStatus === 'offline' && (
+                      <div className="server-offline-message">
+                        <p>Server hiện không hoạt động. Kiểm tra xem máy chủ đã được khởi động chưa.</p>
+                        <ul className="server-tips">
+                          <li>Đảm bảo server đã được khởi động với lệnh <code>npm start</code> hoặc <code>node server.js</code></li>
+                          <li>Kiểm tra xem server có đang chạy trên port 5000 không</li>
+                          <li>Đảm bảo không có tường lửa đang chặn kết nối</li>
+                        </ul>
+                      </div>
+                    )}
+                    <div className="retry-actions">
+                      <button 
+                        onClick={() => fetchPatients()}
+                        className="retry-button"
+                      >
+                        <FaSyncAlt /> Thử lại ngay ({retryCount})
+                      </button>
+                      
+                      {/* Auto retry countdown */}
+                      {retryCount > 0 && retryCount <= 3 && (
+                        <AutoRetry onRetry={fetchPatients} />
                       )}
                     </div>
-                  )}
+                  </div>
                 </div>
-              </>
-            )}
-          </section>
-        )}
+              ) : (
+                <>
+                  <div className="patient-cards">                    {filteredPatients.length > 0 ? (
+                      filteredPatients.map(patient => (
+                        <div className="patient-card" key={patient.id}>
+                          <div className="card-header">
+                            <img 
+                              src={patient.profileImage || "/images/avatar.png"} 
+                              alt={patient.patientInfo?.name || patient.name || "Patient"} 
+                              className="patient-image"
+                            />
+                            <div className="patient-info">                              
+                              <h3 className="patient-name">
+                                {patient.ProfileNormal?.[0]
+                                  || patient.patientInfo?.name
+                                  || patient.name
+                                  || "Không xác định"}
+                              </h3>                              <p className="patient-id">
+                                <strong>Mã hồ sơ:</strong> 
+                                <span>{patient.id ? `${patient.id.substring(0, 6)}...` : "N/A"}</span>
+                              </p>
+                              <p>
+                                <strong>Giới tính:</strong> 
+                                <span>
+                                  {patient.ProfileNormal && Array.isArray(patient.ProfileNormal) && patient.ProfileNormal.length > 3
+                                    ? patient.ProfileNormal[3] 
+                                    : (patient.patientInfo?.gender || "Không xác định")}
+                                </span>
+                              </p>
+                              <p>
+                                <strong>Ngày sinh:</strong> 
+                                <span>
+                                  {patient.ProfileNormal && Array.isArray(patient.ProfileNormal) && patient.ProfileNormal.length > 1
+                                    ? patient.ProfileNormal[1] 
+                                    : (patient.patientInfo?.birthDate || "Không xác định")}
+                                </span>
+                              </p>
+                              <p>
+                                <strong>SĐT:</strong> 
+                                <span>
+                                  {patient.ProfileNormal && Array.isArray(patient.ProfileNormal) && patient.ProfileNormal.length > 2
+                                    ? patient.ProfileNormal[2] 
+                                    : (patient.patientInfo?.phone || patient.phone || "Không xác định")}
+                                </span>
+                              </p>
+                            </div>
+                          </div>                          <div className="card-actions">
+                            <button
+                              className="history-button tertiary"
+                              onClick={() => navigate(`/examination-history/${patient.id}`)}
+                              title="Xem lịch sử khám bệnh"
+                            >
+                              <FaHistory /> Lịch Sử Khám
+                            </button>
+                             <button
+     className="history-button tertiary"
+    onClick={() => handleStartChat(patient.id)}
+    title="Trò chuyện với bệnh nhân"
+  >
+    💬 Trò chuyện
+  </button>
 
-        {activeTab === "Lịch" && (
-          <section className="doctor-content schedule-content">
-            <DoctorSchedule />
-          </section>
-        )}
-
-        {activeTab === "Khám Bệnh" && (
-          <section className="doctor-content">
-            <MedicalExam />
-          </section>
-        )}
-
-       {activeTab === "Chat" && (
-  <section className="doctor-content">
-    <ChatApp
-      initialChatID={chatInfo?.chatID}
-      initialOtherID={chatInfo?.otherID}
-    />
-  </section>
-)}
-
-        {activeTab === "Thông tin" && (
-          <section className="doctor-content personal-info-content">
-            <div className="content-header">
-              <h2>Thông Tin Cá Nhân</h2>
-              {!editing && (
-                <button className="edit-button" onClick={() => setEditing(true)}>
-                  Chỉnh sửa
-                </button>
-              )}
-            </div>
-
-            {editing ? (
-              <div className="profile-edit-container">
-                <form className="doctor-profile-form" onSubmit={handleProfileUpdate}>
-                  <div className="form-group image-upload">
-                    <div className="current-image">
-                      <img src={doctor.img || "/images/avatar.png"} alt="Doctor" />
-                    </div>
-                    <label htmlFor="profile-image" className="custom-file-upload">
-                      Thay đổi ảnh
-                    </label>
-                    <input
-                      type="file"
-                      id="profile-image"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                    />
-                    <input 
-                      type="text" 
-                      name="imgLink" 
-                      placeholder="Hoặc nhập URL ảnh" 
-                      className="image-url-input" 
-                      defaultValue={doctor.img || ""}
-                    />
-                  </div>
-                  
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Họ và tên</label>
-                      <input
-                        type="text"
-                        name="name"
-                        defaultValue={doctor.name || ""}
-                        required
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Ngày sinh</label>
-                      <input
-                        type="date"
-                        name="birthDate"
-                        defaultValue={doctor.birthDate || ""}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>CMND/CCCD</label>
-                      <input
-                        type="text"
-                        name="CCCD"
-                        defaultValue={doctor.CCCD || ""}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Chuyên khoa</label>
-                      <input
-                        type="text"
-                        name="specialty"
-                        defaultValue={doctor.specialty || ""}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Số điện thoại</label>
-                      <input
-                        type="tel"
-                        name="phone"
-                        defaultValue={doctor.phone || ""}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Địa chỉ</label>
-                      <input
-                        type="text"
-                        name="address"
-                        defaultValue={doctor.address || ""}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Kinh nghiệm (năm)</label>
-                      <input
-                        type="number"
-                        name="experience"
-                        min="0"
-                        defaultValue={doctor.experience || 0}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Ghi chú</label>
-                      <textarea
-                        name="note"
-                        defaultValue={doctor.note || ""}
-                      ></textarea>
-                    </div>
-                  </div>
-
-                  <div className="form-actions">
-                    <button type="submit" className="save-button">
-                      Lưu thay đổi
-                    </button>
-                    <button
-                      type="button"
-                      className="cancel-button"
-                      onClick={() => setEditing(false)}
-                    >
-                      Hủy
-                    </button>
-                  </div>
-                </form>
-              </div>
-            ) : (
-              <div className="profile-view-container">
-                <div className="profile-view">
-                  <div className="profile-image">
-                    <img src={doctor.img || "/images/avatar.png"} alt="Doctor profile" />
-                  </div>
-                  
-                  <div className="profile-data">
-                    <div className="data-section">
-                      <h3>Thông tin cơ bản</h3>
-                      <p><strong>Họ và tên:</strong> {doctor.name || "Chưa cập nhật"}</p>
-                      <p><strong>Email:</strong> {doctor.email || "Chưa cập nhật"}</p>
-                      <p><strong>Ngày sinh:</strong> {doctor.birthDate || "Chưa cập nhật"}</p>
-                      <p><strong>CMND/CCCD:</strong> {doctor.CCCD || "Chưa cập nhật"}</p>
-                    </div>
-                    
-                    <div className="data-section">
-                      <h3>Thông tin chuyên môn</h3>
-                      <p><strong>Chuyên khoa:</strong> {doctor.specialty || "Chưa cập nhật"}</p>
-                      <p><strong>Kinh nghiệm:</strong> {doctor.experience ? `${doctor.experience} năm` : "Chưa cập nhật"}</p>
-                    </div>
-                    
-                    <div className="data-section">
-                      <h3>Thông tin liên hệ</h3>
-                      <p><strong>Số điện thoại:</strong> {doctor.phone || "Chưa cập nhật"}</p>
-                      <p><strong>Địa chỉ:</strong> {doctor.address || "Chưa cập nhật"}</p>
-                    </div>
-
-                    {doctor.note && (
-                      <div className="data-section">
-                        <h3>Ghi chú</h3>
-                        <p>{doctor.note}</p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="no-results">
+                        <p>Không tìm thấy bệnh nhân nào</p>
+                        {searchTerm && (
+                          <button onClick={() => {
+                            setSearchTerm("");
+                            fetchPatients();
+                          }}>Xem tất cả bệnh nhân</button>
+                        )}
                       </div>
                     )}
                   </div>
-                </div>
-                
-                <div className="password-change-section">
-                  <h3>Đổi mật khẩu</h3>
-                  <form onSubmit={handleChangePassword}>
-                    <div className="form-group">
-                      <label>Mật khẩu hiện tại</label>
-                      <input type="password" name="oldPassword" required />
+                </>
+              )}
+            </>
+          )}
+
+          {activeTab === "Lịch" && (
+            <DoctorSchedule />
+          )}
+
+          {activeTab === "Khám Bệnh" && (
+            <MedicalExam />
+          )}
+
+          {activeTab === "Chat" && (
+            <ChatApp
+              initialChatID={chatInfo?.chatID}
+              initialOtherID={chatInfo?.otherID}
+            />
+          )}
+
+          {activeTab === "Thông tin" && (
+            <>
+              <div className="content-header">
+                <h2>Thông Tin Cá Nhân</h2>
+                {!editing && (
+                  <button className="edit-button" onClick={() => setEditing(true)}>
+                    Chỉnh sửa
+                  </button>
+                )}
+              </div>
+
+              {editing ? (
+                <div className="profile-edit-container">
+                  <form className="doctor-profile-form" onSubmit={handleProfileUpdate}>
+                    <div className="form-group image-upload">
+                      <div className="current-image">
+                        <img src={doctor.img || "/images/avatar.png"} alt="Doctor" />
+                      </div>
+                      <label htmlFor="profile-image" className="custom-file-upload">
+                        Thay đổi ảnh
+                      </label>
+                      <input
+                        type="file"
+                        id="profile-image"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                      />
+                      <input 
+                        type="text" 
+                        name="imgLink" 
+                        placeholder="Hoặc nhập URL ảnh" 
+                        className="image-url-input" 
+                        defaultValue={doctor.img || ""}
+                      />
                     </div>
-                    <div className="form-group">
-                      <label>Mật khẩu mới</label>
-                      <input type="password" name="newPassword" required />
+                    
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Họ và tên</label>
+                        <input
+                          type="text"
+                          name="name"
+                          defaultValue={doctor.name || ""}
+                          required
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Ngày sinh</label>
+                        <input
+                          type="date"
+                          name="birthDate"
+                          defaultValue={doctor.birthDate || ""}
+                        />
+                      </div>
                     </div>
-                    <div className="form-group">
-                      <label>Xác nhận mật khẩu mới</label>
-                      <input type="password" name="confirmPassword" required />
+
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>CMND/CCCD</label>
+                        <input
+                          type="text"
+                          name="CCCD"
+                          defaultValue={doctor.CCCD || ""}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Chuyên khoa</label>
+                        <input
+                          type="text"
+                          name="specialty"
+                          defaultValue={doctor.specialty || ""}
+                          required
+                        />
+                      </div>
                     </div>
-                    <button type="submit" className="change-password-button">
-                      Đổi mật khẩu
-                    </button>
+
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Số điện thoại</label>
+                        <input
+                          type="tel"
+                          name="phone"
+                          defaultValue={doctor.phone || ""}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Địa chỉ</label>
+                        <input
+                          type="text"
+                          name="address"
+                          defaultValue={doctor.address || ""}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Kinh nghiệm (năm)</label>
+                        <input
+                          type="number"
+                          name="experience"
+                          min="0"
+                          defaultValue={doctor.experience || 0}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Ghi chú</label>
+                        <textarea
+                          name="note"
+                          defaultValue={doctor.note || ""}
+                        ></textarea>
+                      </div>
+                    </div>
+
+                    <div className="form-actions">
+                      <button type="submit" className="save-button">
+                        Lưu thay đổi
+                      </button>
+                      <button
+                        type="button"
+                        className="cancel-button"
+                        onClick={() => setEditing(false)}
+                      >
+                        Hủy
+                      </button>
+                    </div>
                   </form>
                 </div>
-              </div>
-            )}
-          </section>
-        )}
+              ) : (
+                <div className="profile-view-container">
+                  <div className="profile-view">
+                    <div className="profile-image">
+                      <img src={doctor.img || "/images/avatar.png"} alt="Doctor profile" />
+                    </div>
+                    
+                    <div className="profile-data">
+                      <div className="data-section">
+                        <h3>Thông tin cơ bản</h3>
+                        <p><strong>Họ và tên:</strong> {doctor.name || "Chưa cập nhật"}</p>
+                        <p><strong>Email:</strong> {doctor.email || "Chưa cập nhật"}</p>
+                        <p><strong>Ngày sinh:</strong> {doctor.birthDate || "Chưa cập nhật"}</p>
+                        <p><strong>CMND/CCCD:</strong> {doctor.CCCD || "Chưa cập nhật"}</p>
+                      </div>
+                      
+                      <div className="data-section">
+                        <h3>Thông tin chuyên môn</h3>
+                        <p><strong>Chuyên khoa:</strong> {doctor.specialty || "Chưa cập nhật"}</p>
+                        <p><strong>Kinh nghiệm:</strong> {doctor.experience ? `${doctor.experience} năm` : "Chưa cập nhật"}</p>
+                      </div>
+                      
+                      <div className="data-section">
+                        <h3>Thông tin liên hệ</h3>
+                        <p><strong>Số điện thoại:</strong> {doctor.phone || "Chưa cập nhật"}</p>
+                        <p><strong>Địa chỉ:</strong> {doctor.address || "Chưa cập nhật"}</p>
+                      </div>
+
+                      {doctor.note && (
+                        <div className="data-section">
+                          <h3>Ghi chú</h3>
+                          <p>{doctor.note}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="password-change-section">
+                    <h3>Đổi mật khẩu</h3>
+                    <form onSubmit={handleChangePassword}>
+                      <div className="form-group">
+                        <label>Mật khẩu hiện tại</label>
+                        <input type="password" name="oldPassword" required />
+                      </div>
+                      <div className="form-group">
+                        <label>Mật khẩu mới</label>
+                        <input type="password" name="newPassword" required />
+                      </div>
+                      <div className="form-group">
+                        <label>Xác nhận mật khẩu mới</label>
+                        <input type="password" name="confirmPassword" required />
+                      </div>
+                      <button type="submit" className="change-password-button">
+                        Đổi mật khẩu
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </main>
       </div>
     </div>
   );

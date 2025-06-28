@@ -12,7 +12,9 @@ function AdminDashboard() {
   const user = JSON.parse(localStorage.getItem("user"));
   const [activeView, setActiveView] = useState("dashboard");
   const handleLogout = () => {
-   
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    setActiveView("dashboard");
     navigate("/");
   };
   const navigate = useNavigate();
@@ -55,19 +57,11 @@ function AdminDashboard() {
 
   return (
     <div className="admin-dashboard">
-      <header className="topbar">
-        <span>📧 LINH.NH18886@sinhvien.hoasen.edu.vn</span>
-        <span>📞 0787477687</span>
-      </header>
+     
 
       <nav className="navbar">
         <img src="/images/logo.png" alt="Logo" className="logo" />
-        <ul>
-          <li>HOME</li>
-          <li>ABOUT</li>
-          <li>SERVICES</li>
-          <li>CONTACT</li>
-        </ul>
+        
       </nav>
 
       <div className="main">

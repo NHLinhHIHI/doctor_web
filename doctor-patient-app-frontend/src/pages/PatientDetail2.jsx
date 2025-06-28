@@ -65,6 +65,7 @@ const PatientDetail2 = ({ patientId,onBack  }) => {
   
 
   useEffect(() => {
+    console.log("patientId:", patientId);
     if (patientId) {
       fetchPatientDetails(patientId);
     }

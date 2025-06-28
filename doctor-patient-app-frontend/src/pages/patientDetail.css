@@ -349,6 +349,7 @@
   padding: 25px;
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.06);
   margin-bottom: 30px;
+  padding: 15px;
 }
 
 .tab-pane {
@@ -1040,9 +1041,7 @@
     font-size: 20px;
   }
   
-  .tab-content {
-    padding: 15px;
-  }
+ 
   
   .vital-signs-grid {
     grid-template-columns: 1fr;

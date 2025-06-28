@@ -76,23 +76,7 @@ alert("Đăng nhập thất bại!");
   };  
 
   // Hàm đăng nhập nhanh với role doctor
-  const handleQuickDoctorLogin = () => {
-    // Tạo một đối tượng doctor giả lập 
-    const doctorUser = {
-      id: "doctor123",
-      name: "Nguyễn Văn A",
-      email: "doctor@example.com",
-      role: "doctor",
-      specialty: "Đa khoa",
-      phone: "0123456789"
-    };
-
-    // Lưu thông tin doctor vào localStorage
-    localStorage.setItem("user", JSON.stringify(doctorUser));
-    
-    // Chuyển hướng đến trang doctor
-    window.location.href = "/doctor";
-  };
+  
 
   return (
     <div className="container">
@@ -102,33 +86,14 @@ alert("Đăng nhập thất bại!");
       </div>
       <div className="right">
         <img src="/images/avatar.png" className="avatar" />
-        {/* ✅ Sửa ở đây */}
         <form onSubmit={handleLogin}>
           <input type="email" name="email" placeholder="UserName" required />
           <input type="password" name="password" placeholder="PassWord" required />
-          <label><input type="checkbox" name="remember" /> Remember Account</label>
           <button type="submit">Login</button>
           
-          {/* Thêm nút đăng nhập nhanh */}
-          <button 
-            type="button" 
-            onClick={handleQuickDoctorLogin} 
-            style={{ 
-              marginTop: "10px", 
-              backgroundColor: "#1bb9b7",
-              color: "white"
-            }}
-          >
-            Đăng nhập nhanh với role Doctor
-          </button>
           
-          <p><a href="#">Forgot PassWord?</a></p>
           <hr />
-          <div className="socials">
-            <img src="/images/facebook.png" alt="Facebook" />
-            <img src="/images/google.png" alt="Google" />
-            <img src="/images/zalo.png" alt="Zalo" />
-          </div>
+         
         </form>
       </div>
     </div>

@@ -1,273 +1,230 @@
-// routes/medicalExam.js
+// routes/medicalExam.js - Đã cập nhật logic để sử dụng UTC+7 cho xử lý ngày giờ
+// VÀ LOẠI BỎ HOÀN TOÀN TẤT CẢ CÁC TRUY VẤN SUBCOLLECTION PROFILE/NORMALPROFILE VÀ PROFILE/HEALTHPROFILE
+
 const express = require('express');
 const router = express.Router();
 const { db } = require('../firebase');
 const { Timestamp } = require('firebase-admin/firestore');
 const admin = require('firebase-admin');
 
+// Offset cho UTC+7 (7 giờ * 60 phút/giờ * 60 giây/phút * 1000 mili giây/giây)
+const UTC_PLUS_7_OFFSET_MS = 7 * 60 * 60 * 1000;
+
+// Hàm trợ giúp để lấy thông tin patient profile
+// CHỈ ĐỌC TỪ TÀI LIỆU USERS CHÍNH, KHÔNG DÙNG SUBCOLLECTIONS NÀO
+async function getPatientProfileData(patientId) {
+  let patientData = {
+    fullName: '',
+    DoB: '',
+    gender: '',
+    address: '',
+    CCCD: '',
+    phone: ''
+  };
+  let healthProfileData = {
+    heartRate: '',
+    height: '',
+    Eye: '', // Đã thống nhất dùng 'Eye' cho thị lực
+    weight: '',
+    medicalHistory: ''
+  };
+
+  try {
+    const userDoc = await db.collection('users').doc(patientId).get();
+    if (!userDoc.exists) {
+      console.log(`User document not found for patient ${patientId}`);
+      return { patientData, healthProfileData };
+    }
+
+    const userData = userDoc.data();
+
+    // 1. Ưu tiên lấy thông tin cơ bản từ mảng ProfileNormal trong document user chính
+    // ProfileNormal: [Name, DoB, Phone, Gender, CCCD, Address]
+    if (userData.ProfileNormal && Array.isArray(userData.ProfileNormal) && userData.ProfileNormal.length >= 6) {
+      const pn = userData.ProfileNormal;
+      patientData.fullName = pn[0] || patientData.fullName;
+      patientData.DoB = pn[1] || patientData.DoB;
+      patientData.phone = pn[2] || patientData.phone;
+      patientData.gender = pn[3] || patientData.gender;
+      patientData.CCCD = pn[4] || patientData.CCCD;
+      patientData.address = pn[5] || patientData.address;
+      console.log(`[getPatientProfileData] Loaded ProfileNormal from array for ${patientId}`);
+    } else {
+      console.log(`[getPatientProfileData] ProfileNormal array not found or incomplete for ${patientId}, falling back to direct fields.`);
+      // 2. Fallback: Lấy từ các trường trực tiếp trong document users nếu mảng không có
+      patientData.fullName = userData.displayName || userData.name || userData.fullName || patientData.fullName;
+      patientData.DoB = userData.DoB || patientData.DoB;
+      patientData.gender = userData.gender || patientData.gender;
+      patientData.address = userData.address || patientData.address;
+      patientData.CCCD = userData.CCCD || patientData.CCCD;
+      patientData.phone = userData.phoneNumber || userData.phone || patientData.phone;
+    }
+
+    // 1. Ưu tiên lấy thông tin sức khỏe từ mảng HealthProfile trong document user chính
+    // HealthProfile: [HeartRate, Height, Eye, Weight, medicalHistory]
+    if (userData.HealthProfile && Array.isArray(userData.HealthProfile) && userData.HealthProfile.length >= 5) {
+      const hp = userData.HealthProfile;
+      healthProfileData.heartRate = hp[0] || healthProfileData.heartRate;
+      healthProfileData.height = hp[1] || healthProfileData.height;
+      healthProfileData.Eye = hp[2] || healthProfileData.Eye; // Thị lực
+      healthProfileData.weight = hp[3] || healthProfileData.weight;
+      healthProfileData.medicalHistory = hp[4] || healthProfileData.medicalHistory;
+      console.log(`[getPatientProfileData] Loaded HealthProfile from array for ${patientId}`);
+    } else {
+      console.log(`[getPatientProfileData] HealthProfile array not found or incomplete for ${patientId}, using direct healthProfile object or empty.`);
+      // 2. Fallback: Lấy từ đối tượng healthProfile trực tiếp trong document users (cấu trúc cũ hơn)
+      if (userData.healthProfile && typeof userData.healthProfile === 'object') {
+        healthProfileData.heartRate = userData.healthProfile.heartRate || healthProfileData.heartRate;
+        healthProfileData.height = userData.healthProfile.height || healthProfileData.height;
+        healthProfileData.Eye = userData.healthProfile.Eye || userData.healthProfile.leftEye || healthProfileData.Eye;
+        healthProfileData.weight = userData.healthProfile.weight || healthProfileData.weight;
+        healthProfileData.medicalHistory = userData.healthProfile.medicalHistory || healthProfileData.medicalHistory;
+      } else {
+        console.log(`[getPatientProfileData] No HealthProfile data found for ${patientId}.`);
+      }
+    }
+
+  } catch (error) {
+    console.error(`[getPatientProfileData] Error processing patient data for ${patientId}:`, error);
+    // Dữ liệu đã được khởi tạo ở đầu hàm, nên chỉ cần log lỗi.
+  }
+
+  return { patientData, healthProfileData };
+}
+
+// Hàm trợ giúp để lấy ngày hiện tại ở UTC+7
+const getNowInUTCPlus7 = () => {
+  const now = new Date();
+  // Lấy thời gian UTC
+  const utcTime = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
+    now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds(), now.getUTCMilliseconds());
+  // Thêm offset của UTC+7
+  return new Date(utcTime + UTC_PLUS_7_OFFSET_MS);
+};
+
+
+
+
 // GET - Lấy danh sách bệnh nhân đang chờ trong ngày với timeSlot và examinationDate
 router.get('/waiting-patients', async (req, res) => {
   try {
-    const { doctorId, date } = req.query;   // Lọc lịch hẹn trong ngày từ tham số date hoặc ngày hiện tại
-    let filterDate = new Date();
-    if (date) {
-      filterDate = new Date(date);
+    const { doctorId, date } = req.query; // date sẽ là "YYYY-MM-DD"
+
+    if (!doctorId) {
+      return res.status(400).json({ success: false, error: "Missing doctor ID." });
     }
 
-    // Đảm bảo filterDate là hợp lệ
-    if (isNaN(filterDate.getTime())) {
-      console.error(`Giá trị date không hợp lệ: ${date}, sử dụng ngày hiện tại thay thế`);
-      filterDate = new Date();
-    }
-
-    // Tạo thời gian bắt đầu và kết thúc của ngày (sử dụng múi giờ của server)
-    const todayStart = new Date(filterDate);
-    todayStart.setHours(0, 0, 0, 0);
-
-    const todayEnd = new Date(filterDate);
-    todayEnd.setHours(23, 59, 59, 999);
-
-    console.log('Lọc lịch hẹn từ:', todayStart.toISOString(), 'đến:', todayEnd.toISOString());// Truy vấn không cần index: lấy tất cả lịch hẹn của bác sĩ có trạng thái chờ, lọc bằng JS
-    let query = db.collection('HisSchedule')
+    const snapshot = await db.collection('HisSchedule')
       .where('doctorID', '==', doctorId)
-      .where('status', '==', 'wait');
-    // Sẽ lọc lại bằng JS sau khi lấy dữ liệu
+      .where('status', '==', 'wait')
+      .orderBy("examinationDate", "asc")
+      .orderBy("timeOrder", "asc")
+      .get();
 
-    const snapshot = await query.get();
-
-
-    const waitingPatients = [];
-
-    // Lấy thông tin chi tiết của từng bệnh nhân
-    for (const doc of snapshot.docs) {
+    const waitingPatientsPromises = snapshot.docs.map(async (doc) => {
       const appointment = {
         id: doc.id,
         ...doc.data()
-      };      // Lọc theo examinationDate (Timestamp) để chỉ lấy lịch trong ngày được chọn
-      if (appointment.examinationDate) {
-        // Xử lý cả trường hợp Firestore Timestamp và Date object thông thường
-        let appointmentDate;
+      };
 
-        // Kiểm tra nếu là Firestore Timestamp
-        if (appointment.examinationDate.toDate && typeof appointment.examinationDate.toDate === 'function') {
-          appointmentDate = appointment.examinationDate.toDate();
-        }
-        // Kiểm tra nếu là timestamp dạng số
-        else if (typeof appointment.examinationDate === 'number') {
-          appointmentDate = new Date(appointment.examinationDate);
-        }
-        // Kiểm tra nếu đã là Date
-        else if (appointment.examinationDate instanceof Date) {
-          appointmentDate = appointment.examinationDate;
-        }
-        // Trường hợp khác (có thể là string)
-        else {
-          try {
-            appointmentDate = new Date(appointment.examinationDate);
-          } catch (e) {
-            console.error(`Không thể chuyển đổi examinationDate sang Date: ${appointment.examinationDate}`, e);
-            // Bỏ qua lịch hẹn này nếu không xác định được ngày
-            continue;
-          }
-        }
-
-        // Kiểm tra tính hợp lệ của appointmentDate
-        if (isNaN(appointmentDate.getTime())) {
-          console.error(`Ngày không hợp lệ từ examinationDate: ${appointment.examinationDate} cho lịch hẹn ${appointment.id}`);
-          // Đặt một timeSlot mặc định nếu không thể xác định được ngày
-          appointment.timeSlot = String(appointment.timeSlot || '00:00');
-        } else {
-          // Kiểm tra xem lịch hẹn có trong ngày được chọn không
-          const appointmentDay = appointmentDate.toISOString().split('T')[0]; // yyyy-mm-dd
-          const filterDay = filterDate.toISOString().split('T')[0];
-
-          if (appointmentDay !== filterDay) {
-            console.log(`Bỏ qua lịch hẹn ${appointment.id} vì không đúng ngày ${filterDay}`);
-            continue;
-          }
-
-          // Đảm bảo có thông tin timeSlot để hiển thị giờ hẹn
-          if (!appointment.timeSlot) {
-            // Nếu không có timeSlot, tạo timeSlot từ examinationDate
-            const hours = appointmentDate.getHours().toString().padStart(2, '0');
-            const minutes = appointmentDate.getMinutes().toString().padStart(2, '0');
-            appointment.timeSlot = `${hours}:${minutes}`;
-            console.log(`Tạo timeSlot từ examinationDate: ${appointment.timeSlot} cho lịch hẹn ${appointment.id}`);
-          } else {
-            // Đảm bảo timeSlot là chuỗi
-            appointment.timeSlot = String(appointment.timeSlot);
-            console.log(`Sử dụng timeSlot có sẵn: ${appointment.timeSlot} (${typeof appointment.timeSlot}) cho lịch hẹn ${appointment.id}`);
-          }
-        }
-        console.log('Appointment data:', appointment.id, {
-          patientId: appointment.patientID,
-          timeSlot: appointment.timeSlot,
-          examinationDate: appointment.examinationDate
-            ? (appointment.examinationDate.toDate
-              ? appointment.examinationDate.toDate().toISOString()
-              : new Date(appointment.examinationDate).toISOString())
-            : null,
-          status: appointment.status
-        });
-        // Đảm bảo có ID bệnh nhân (parentId hoặc patientId)
-        const patientId = appointment.parentId || appointment.patientID;
-
-        if (!patientId) {
-          console.log(`Bỏ qua lịch hẹn ${appointment.id} vì không có ID bệnh nhân`);
-          continue;
-        }
-
-        // Lấy thông tin bệnh nhân
+      let appointmentDate = new Date();
+      if (appointment.examinationDate && appointment.examinationDate.toDate && typeof appointment.examinationDate.toDate === 'function') {
+        // Firebase Timestamp.toDate() trả về Date object ở múi giờ cục bộ của server.
+        // Chúng ta sẽ điều chỉnh nó để hiển thị theo UTC+7
+        const dateFromFirestore = appointment.examinationDate.toDate();
+        const utcTime = Date.UTC(dateFromFirestore.getUTCFullYear(), dateFromFirestore.getUTCMonth(), dateFromFirestore.getUTCDate(),
+          dateFromFirestore.getUTCHours(), dateFromFirestore.getUTCMinutes(), dateFromFirestore.getUTCSeconds(), dateFromFirestore.getUTCMilliseconds());
+        appointmentDate = new Date(utcTime + UTC_PLUS_7_OFFSET_MS); // Đây là Date object đại diện cho thời điểm ở UTC+7
+      } else if (typeof appointment.examinationDate === 'number') {
+        const dateFromNumber = new Date(appointment.examinationDate);
+        const utcTime = Date.UTC(dateFromNumber.getUTCFullYear(), dateFromNumber.getUTCMonth(), dateFromNumber.getUTCDate(),
+          dateFromNumber.getUTCHours(), dateFromNumber.getUTCMinutes(), dateFromNumber.getUTCSeconds(), dateFromNumber.getUTCMilliseconds());
+        appointmentDate = new Date(utcTime + UTC_PLUS_7_OFFSET_MS);
+      } else if (appointment.examinationDate instanceof Date) {
+        const dateFromObject = appointment.examinationDate;
+        const utcTime = Date.UTC(dateFromObject.getUTCFullYear(), dateFromObject.getUTCMonth(), dateFromObject.getUTCDate(),
+          dateFromObject.getUTCHours(), dateFromObject.getUTCMinutes(), dateFromObject.getUTCSeconds(), dateFromObject.getUTCMilliseconds());
+        appointmentDate = new Date(utcTime + UTC_PLUS_7_OFFSET_MS);
+      } else {
         try {
-          const patientDoc = await db.collection('users').doc(patientId).get();
-          if (patientDoc.exists) {
-            // Đảm bảo luôn có parentId và patientId cho frontend sử dụng
-            appointment.parentId = patientId;
-            appointment.patientId = patientId;
-
-            appointment.patient = {
-              id: patientDoc.id,
-              ...patientDoc.data()
-            };
-            // Kiểm tra nếu user có Role là patient thì lấy đầy đủ thông tin từ subcollection Profile/NormalProfile
-            if (patientDoc.data().Role === 'patient' || patientDoc.data().Role === 'Patient') {
-              try {
-                // Kiểm tra trường hợp data mới (array) trực tiếp từ user document
-                if (patientDoc.data().ProfileNormal && Array.isArray(patientDoc.data().ProfileNormal)) {
-
-                  // PatientNormal array structure: [Name, DoB, Phone, Gender, CCCD, Address]
-                  if (patientDoc.data().ProfileNormal.length > 0) {
-                    appointment.patient.fullName = patientDoc.data().ProfileNormal[0] || appointment.patient.fullName;
-                  }
-                  if (patientDoc.data().ProfileNormal.length > 1) {
-                    appointment.patient.DoB = patientDoc.data().ProfileNormal[1] || appointment.patient.DoB;
-                  }
-                  if (patientDoc.data().ProfileNormal.length > 2) {
-                    appointment.patient.phone = patientDoc.data().ProfileNormal[2] || appointment.patient.phone;
-                  }
-                  if (patientDoc.data().ProfileNormal.length > 3) {
-                    appointment.patient.gender = patientDoc.data().ProfileNormal[3] || appointment.patient.gender;
-                  }
-                  if (patientDoc.data().ProfileNormal.length > 4) {
-                    appointment.patient.CCCD = patientDoc.data().ProfileNormal[4] || appointment.patient.CCCD;
-                  }
-                  if (patientDoc.data().ProfileNormal.length > 5) {
-                    appointment.patient.address = patientDoc.data().ProfileNormal[5] || appointment.patient.address;
-                  }
-                } else {
-                  // Fallback to original subcollection access
-                  const normalProfileDoc = await db.collection('users').doc(patientId).doc('ProfileNormal').get();
-                  if (normalProfileDoc.exists) {
-                    const normalProfileData = normalProfileDoc.data();
-                    // Log để debug
-
-                    // Lấy tất cả thông tin từ NormalProfile
-                    // Tên bệnh nhân
-                    if (normalProfileData.Name) {
-                      appointment.patient.fullName = normalProfileData.Name;
-                    }
-
-                    // Ngày sinh
-                    if (normalProfileData.DoB) {
-                      appointment.patient.DoB = normalProfileData.DoB;
-                    }
-
-                    // Giới tính
-                    if (normalProfileData.Gender) {
-                      appointment.patient.gender = normalProfileData.Gender;
-                    }
-
-                    // Địa chỉ
-                    if (normalProfileData.Address) {
-                      appointment.patient.address = normalProfileData.Address;
-                    }
-
-                    // CCCD (ID card)
-                    if (normalProfileData.CCCD) {
-                      appointment.patient.CCCD = normalProfileData.CCCD;
-                    }
-
-                    // Số điện thoại
-                    if (normalProfileData.Phone) {
-                      appointment.patient.phone = normalProfileData.Phone;
-                    }
-                  } else {
-                    console.log(`Không tìm thấy NormalProfile cho bệnh nhân ${patientId}`);
-                  }
-                }
-                // Lấy thông tin từ HealthProfile trong user document nếu là mảng              if (patientDoc.data().HealthProfile && Array.isArray(patientDoc.data().HealthProfile)) {
-
-                appointment.patient.healthProfile = {};
-                // HealthProfile array structure: [HeartRate, Height, Eye, Weight, medicalHistory]
-                if (patientDoc.data().HealthProfile.length > 0) {
-                  appointment.patient.healthProfile.heartRate = patientDoc.data().HealthProfile[0] || '';
-                }
-                if (patientDoc.data().HealthProfile.length > 1) {
-                  appointment.patient.healthProfile.height = patientDoc.data().HealthProfile[1] || '';
-                }
-                if (patientDoc.data().HealthProfile.length > 2) {
-                  appointment.patient.healthProfile.Eye = patientDoc.data().HealthProfile[2] || '';
-                }
-                // Removed rightEye field in the new structure
-                if (patientDoc.data().HealthProfile.length > 3) {
-                  appointment.patient.healthProfile.weight = patientDoc.data().HealthProfile[3] || '';
-                } if (patientDoc.data().HealthProfile.length > 4) {
-                  appointment.patient.healthProfile.medicalHistory = patientDoc.data().HealthProfile[4] || '';
-                }
-              }
-
-              catch (profileError) {
-                console.error(`Lỗi khi lấy thông tin profile cho bệnh nhân ${patientId}:`, profileError);
-              }
-            }
-          } else {
-            console.log(`Không tìm thấy bệnh nhân với ID ${patientId}`);
-          }
-        } catch (error) {
-          console.error(`Lỗi khi lấy thông tin bệnh nhân ${patientId}:`, error);
+          const dateFromString = new Date(appointment.examinationDate);
+          const utcTime = Date.UTC(dateFromString.getUTCFullYear(), dateFromString.getUTCMonth(), dateFromString.getUTCDate(),
+            dateFromString.getUTCHours(), dateFromString.getUTCMinutes(), dateFromString.getUTCSeconds(), dateFromString.getUTCMilliseconds());
+          appointmentDate = new Date(utcTime + UTC_PLUS_7_OFFSET_MS);
+        } catch (e) {
+          console.error(`Could not convert examinationDate to Date: ${appointment.examinationDate}`, e);
         }
-        waitingPatients.push(appointment);
-      }    // Sắp xếp bệnh nhân theo thời gian khám (timeSlot)
-      
-    }
-    waitingPatients.sort((a, b) => {
-        const timeA = String(a.timeSlot || '00:00');
-        const timeB = String(b.timeSlot || '00:00');
+      }
 
-        // Tách giờ và phút từ chuỗi, chuyển sang dạng số
-        const [hoursA, minutesA] = timeA.split(':').map(Number);
-        const [hoursB, minutesB] = timeB.split(':').map(Number);
+      if (!isNaN(appointmentDate.getTime())) {
+        appointment.appointmentTimeSlot = appointmentDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+      } else {
+        appointment.appointmentTimeSlot = String(appointment.timeSlot || 'N/A');
+      }
 
-        // So sánh giờ trước
-        if (hoursA !== hoursB) {
-          return hoursA - hoursB; // Trả về hiệu số của giờ
-        }
+      const patientId = appointment.parentId || appointment.patientID;
 
-        // Nếu giờ bằng nhau thì so sánh phút
-        return minutesA - minutesB; // Trả về hiệu số của phút
-      });
-      console.log(`Đã lọc và sắp xếp ${waitingPatients.length} bệnh nhân đang chờ`);
-      console.log('Danh sách ID đã sắp xếp theo thứ tự:', waitingPatients.map(patient => patient.id));
-      res.json({
-        success: true,
-        date: filterDate.toISOString().split('T')[0], // Trả về ngày đã lọc
-        waitingPatients
-      });
-  } catch (error) {
-    console.error("Lỗi khi lấy danh sách bệnh nhân đang chờ:", error);
+      if (patientId) {
+        appointment.patientId = patientId;
+        // Gọi hàm mới để lấy thông tin profile với logic ưu tiên (chỉ mảng hoặc trường trực tiếp)
+        const { patientData, healthProfileData } = await getPatientProfileData(patientId);
 
-    // Kiểm tra xem header đã được gửi chưa trước khi gửi lỗi
-    if (res.headersSent) {
-      console.error("Lỗi sau khi header đã được gửi đi:", error);
-      return;
-    }
-    
+        appointment.patientName = patientData.fullName || "Không có tên";
+        appointment.patientDoB = patientData.DoB || "N/A";
+        appointment.patientGender = patientData.gender || "N/A";
+        appointment.patientAddress = patientData.address || "N/A";
+        appointment.patientCCCD = patientData.CCCD || "N/A";
+        appointment.patientPhone = patientData.phone || "N/A";
 
-    // Gửi response lỗi và KẾT THÚC hàm
-    res.status(500).json({
-      success: false,
-      error: "Lỗi server khi lấy danh sách bệnh nhân đang chờ: " + error.message
+        appointment.patient = {
+          id: patientId,
+          ...patientData,
+          healthProfile: healthProfileData
+        };
+      } else {
+        console.warn(`Appointment ${appointment.id} has no patientId/parentId.`);
+        appointment.patientName = "Không có ID bệnh nhân";
+        appointment.patient = { healthProfile: {} };
+      }
+
+      appointment.symptomsInitial = appointment.symptom || "";
+
+      return appointment;
     });
+
+    const waitingPatients = await Promise.all(waitingPatientsPromises);
+
+    const validWaitingPatients = waitingPatients.filter(p => p.patientId && p.patientName !== "Không có ID bệnh nhân");
+
+    validWaitingPatients.sort((a, b) => {
+      const timeA = String(a.appointmentTimeSlot || '00:00');
+      const timeB = String(b.appointmentTimeSlot || '00:00');
+
+      const [hoursA, minutesA] = timeA.split(':').map(Number);
+      const [hoursB, minutesB] = timeB.split(':').map(Number);
+
+      if (hoursA !== hoursB) {
+        return hoursA - hoursB;
+      }
+      return minutesA - minutesB;
+    });
+
+    const responseDate = date || getNowInUTCPlus7().toISOString().split('T')[0].substring(0, 10); // Lấy phần YYYY-MM-DD
+
+    res.json({
+      success: true,
+      date: responseDate,
+      waitingPatients: validWaitingPatients
+    });
+
+  } catch (error) {
+    console.error("Error fetching waiting patients:", error);
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        error: "Server error when fetching waiting patients: " + error.message
+      });
+    }
   }
 });
 
@@ -285,7 +242,6 @@ router.post('/', async (req, res) => {
       medications
     } = req.body;
 
-    // 1. Validate đầu vào
     if (!doctorId || !diagnosis) {
       return res.status(400).json({
         success: false,
@@ -300,6 +256,7 @@ router.post('/', async (req, res) => {
       });
     }
 
+
     const validMedications = medications.filter(med => med.medicineName && med.medicineName.trim() !== "");
     if (validMedications.length === 0) {
       return res.status(400).json({
@@ -307,30 +264,47 @@ router.post('/', async (req, res) => {
         error: "Không có thuốc nào có tên hợp lệ."
       });
     }
+    const invalidMedications = medications.filter(med =>
+  !med.dosage || !med.quantity || med.dosage.trim() === "" || med.quantity.trim() === ""
+);
+if (invalidMedications.length > 0) {
+  return res.status(400).json({
+    success: false,
+    error: "Tất cả thuốc phải có đầy đủ liều dùng (dosage) và số lượng (quantity)."
+  });
+}
 
-    // 2. Tạo document mới trong collection "examinations"
+
+    // Tạo Timestamp cho reExamDate dựa trên UTC+7
+    let reExamTimestamp = null;
+    if (reExamDate) {
+      const [year, month, day] = reExamDate.split('-').map(Number);
+      const reExamDateUTC7 = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+      const adjustedReExamDate = new Date(reExamDateUTC7.getTime() - UTC_PLUS_7_OFFSET_MS);
+      reExamTimestamp = Timestamp.fromDate(adjustedReExamDate);
+    }
+
+
     const examinationRef = db.collection('examinations').doc();
     const examinationData = {
-      appointmentId: appointmentId || "", // Có thể không có nếu là khám trực tiếp
-      patientId: patientId, // ID của bệnh nhân
-      doctorId: doctorId, // ID của bác sĩ
-      diagnosis: diagnosis, // Chẩn đoán
-      symptoms: symptoms || "", // Triệu chứng lúc khám
-      notes: notes || "", // Ghi chú thêm
-      examinationDate: Timestamp.now(), // Ngày giờ khám
-      reExamDate: reExamDate ? Timestamp.fromDate(new Date(reExamDate)) : null, // Ngày tái khám (nếu có)
-      medications: medications // Lưu trực tiếp mảng medications
+      appointmentId: appointmentId || null,
+      patientId: patientId,
+      doctorId: doctorId,
+      diagnosis: diagnosis,
+      symptoms: symptoms || "",
+      notes: notes || "",
+      examinationDate: Timestamp.now(), // Firestore Timestamp.now() là UTC, tốt cho việc lưu trữ
+      reExamDate: reExamTimestamp,
+      medications: medications
     };
 
     await examinationRef.set(examinationData);
 
-    // 3. (Tùy chọn) Cập nhật trạng thái của lịch hẹn (nếu có appointmentId)
     if (appointmentId) {
       const appointmentRef = db.collection('HisSchedule').doc(appointmentId);
       await appointmentRef.update({ status: 'completed' });
     }
 
-    // 4. Trả về response thành công
     res.status(201).json({
       success: true,
       message: "Đã lưu kết quả khám và đơn thuốc thành công.",
@@ -351,7 +325,6 @@ router.get('/:examinationId', async (req, res) => {
   try {
     const { examinationId } = req.params;
 
-    // Get examination document
     const examinationRef = db.collection('examinations').doc(examinationId);
     const examinationDoc = await examinationRef.get();
 
@@ -364,25 +337,35 @@ router.get('/:examinationId', async (req, res) => {
 
     const examination = examinationDoc.data();
 
-    // Get prescriptions from the subcollection
-    const prescriptionsSnapshot = await examinationRef.collection('prescription').get();
+    examination.medications = Array.isArray(examination.medications) ? examination.medications : [];
 
-    const prescriptions = [];
-    prescriptionsSnapshot.forEach(doc => {
-      prescriptions.push({
-        id: doc.id,
-        ...doc.data()
-      });
-    });
+    if (examination.doctorId) {
+      try {
+        const doctorDoc = await db.collection('users').doc(examination.doctorId).get();
+        if (doctorDoc.exists) {
+          const doctorData = doctorDoc.data();
+          examination.doctorName = doctorData.displayName || doctorData.name || 'Không xác định';
+          examination.doctorSpecialty = doctorData.specialty || '';
+        } else {
+          examination.doctorName = 'Bác sĩ không tồn tại';
+          examination.doctorSpecialty = '';
+        }
+      } catch (error) {
+        console.error(`Error fetching doctor info for examination ${examinationId}:`, error);
+        examination.doctorName = 'Lỗi truy vấn thông tin BS';
+        examination.doctorSpecialty = '';
+      }
+    } else {
+      examination.doctorName = 'Không có thông tin bác sĩ';
+      examination.doctorSpecialty = '';
+    }
 
-    // Return combined data
     res.json({
       success: true,
       examination: {
         id: examinationDoc.id,
         ...examination
-      },
-      prescriptions
+      }
     });
 
   } catch (error) {
@@ -394,7 +377,7 @@ router.get('/:examinationId', async (req, res) => {
   }
 });
 
-// GET - Danh sách các lần khám của một bệnh nhân
+// GET - Danh sách các lần khám của một bệnh nhân (lịch sử khám)
 router.get('/examination-history/:patientId', async (req, res) => {
   try {
     const { patientId } = req.params;
@@ -405,35 +388,35 @@ router.get('/examination-history/:patientId', async (req, res) => {
       });
     }
 
-    console.log(`Đang lấy lịch sử khám của bệnh nhân ID: ${patientId}`);
+    console.log(`Fetching examination history for patient ID: ${patientId}`);
 
-
-
-    // Lấy các bản ghi khám từ collection examinations
-    // Lấy tất cả bản ghi khám của bệnh nhân mà không cần orderBy (không cần index)
     const examinationsSnapshot = await db.collection('examinations')
       .where('patientId', '==', patientId)
+      .orderBy('examinationDate', 'desc')
       .get();
 
-    const examinations = [];
-
-    for (const doc of examinationsSnapshot.docs) {
+    const examinationsPromises = examinationsSnapshot.docs.map(async (doc) => {
       const examination = {
         id: doc.id,
-        name: doc.data().name || '', // Tên khám (nếu có)
         ...doc.data()
       };
 
-      // Chuyển đổi Timestamp sang Date
+      // Khi đọc từ Firestore, Timestamp.toDate() sẽ trả về Date object theo múi giờ cục bộ của server.
+      // Để hiển thị theo UTC+7, chúng ta sẽ điều chỉnh nó.
       if (examination.examinationDate && examination.examinationDate.toDate) {
-        examination.examinationDate = examination.examinationDate.toDate();
+        const dateFromFirestore = examination.examinationDate.toDate();
+        const utcTime = Date.UTC(dateFromFirestore.getUTCFullYear(), dateFromFirestore.getUTCMonth(), dateFromFirestore.getUTCDate(),
+          dateFromFirestore.getUTCHours(), dateFromFirestore.getUTCMinutes(), dateFromFirestore.getUTCSeconds(), dateFromFirestore.getUTCMilliseconds());
+        examination.examinationDate = new Date(utcTime + UTC_PLUS_7_OFFSET_MS); // Đây là Date object đại diện cho thời điểm ở UTC+7
       }
 
       if (examination.reExamDate && examination.reExamDate.toDate) {
-        examination.reExamDate = examination.reExamDate.toDate();
+        const dateFromFirestore = examination.reExamDate.toDate();
+        const utcTime = Date.UTC(dateFromFirestore.getUTCFullYear(), dateFromFirestore.getUTCMonth(), dateFromFirestore.getUTCDate(),
+          dateFromFirestore.getUTCHours(), dateFromFirestore.getUTCMinutes(), dateFromFirestore.getUTCSeconds(), dateFromFirestore.getUTCMilliseconds());
+        examination.reExamDate = new Date(utcTime + UTC_PLUS_7_OFFSET_MS); // Đây là Date object đại diện cho thời điểm ở UTC+7
       }
 
-      // Lấy thông tin bác sĩ
       if (examination.doctorId) {
         try {
           const doctorDoc = await db.collection('users').doc(examination.doctorId).get();
@@ -444,50 +427,38 @@ router.get('/examination-history/:patientId', async (req, res) => {
           } else {
             examination.doctorName = 'Bác sĩ không tồn tại';
             examination.doctorSpecialty = '';
-            console.warn(`Lịch sử khám: Không tìm thấy bác sĩ với ID ${examination.doctorId} trong collection 'users'.`);
+            console.warn(`Examination history: Doctor with ID ${examination.doctorId} not found in 'users' collection.`);
           }
         } catch (error) {
-          console.error(`Lỗi khi lấy thông tin bác sĩ ${examination.doctorId} cho lịch sử khám: ${error}`);
-          examination.doctorName = 'Lỗi truy vấn thông tin BS';
+          console.error(`Error fetching doctor information for examination ID ${examination.id}:`, error);
+          examination.doctorName = 'Error fetching doctor info';
           examination.doctorSpecialty = '';
         }
       } else {
-        examination.doctorName = 'Không có thông tin bác sĩ';
+        examination.doctorName = 'No doctor information';
         examination.doctorSpecialty = '';
-        console.warn(`Lịch sử khám: Thiếu doctorId cho bản ghi khám ID ${examination.id}.`);
+        console.warn(`Examination history: Missing doctorId for examination record ID ${examination.id}.`);
       }
 
-      // Đơn thuốc (medications) giờ đã là một trường trực tiếp của examination document.
-      // Đảm bảo nó là một mảng, nếu không có thì là mảng rỗng.
       examination.medications = Array.isArray(examination.medications) ? examination.medications : [];
 
-      // Xóa logic cũ lấy prescriptions từ subcollection (nếu còn)
-      delete examination.prescriptions; // Xóa trường prescriptions cũ nếu có
-
-      examinations.push(examination);
-    }
-    // Sắp xếp lại theo thời gian khám (mới nhất lên đầu) trong trường hợp không dùng orderBy trong truy vấn
-    examinations.sort((a, b) => {
-      // Nếu không có ngày khám, đặt ngày đó về thời điểm xa nhất trong quá khứ
-      const dateA = a.examinationDate ? new Date(a.examinationDate) : new Date(0);
-      const dateB = b.examinationDate ? new Date(b.examinationDate) : new Date(0);
-      return dateB - dateA; // Sắp xếp giảm dần (mới nhất lên đầu)
+      return examination;
     });
+
+    const examinations = await Promise.all(examinationsPromises);
 
     console.log("---------- EXAMINATION HISTORY - RESPONSE DATA ----------");
     console.log(`Number of examinations found: ${examinations.length}`);
     if (examinations.length > 0) {
       console.log("First examination:", {
         id: examinations[0].id,
-        examinationDate: examinations[0].examinationDate,
+        // Trả về ISO string để đảm bảo múi giờ rõ ràng (UTC+7)
+        examinationDate: examinations[0].examinationDate ? examinations[0].examinationDate.toISOString() : null,
+        reExamDate: examinations[0].reExamDate ? examinations[0].reExamDate.toISOString() : null,
         diagnosis: examinations[0].diagnosis,
         doctorName: examinations[0].doctorName,
+        medicationsCount: examinations[0].medications.length
       });
-
-      // Check if medications array exists and was renamed to prescriptions
-      console.log("Medications data:", examinations[0].medications ?
-        `Found ${examinations[0].medications.length} medications` :
-        "No medications found");
     }
 
     res.json({
@@ -499,12 +470,12 @@ router.get('/examination-history/:patientId', async (req, res) => {
     console.error(`Lỗi khi lấy lịch sử khám: ${error}`);
     res.status(500).json({
       success: false,
-      error: `Lỗi khi lấy lịch sử khám: ${error.message}`
+      error: `Server error fetching examination history: ${error.message}`
     });
   }
 });
 
-// GET - Kiểm tra cấu trúc dữ liệu bệnh nhân cho mục đích debug
+// GET - Kiểm tra cấu trúc dữ liệu bệnh nhân cho mục đích debug (đã loại bỏ kiểm tra subcollections)
 router.get('/check-patient-structure/:patientId', async (req, res) => {
   try {
     const { patientId } = req.params;
@@ -512,42 +483,23 @@ router.get('/check-patient-structure/:patientId', async (req, res) => {
     if (!patientId) {
       return res.status(400).json({
         success: false,
-        error: "Thiếu ID bệnh nhân"
+        error: "Missing patient ID"
       });
     }
 
-    // Lấy thông tin người dùng từ Firestore
     const patientDoc = await db.collection('users').doc(patientId).get();
 
     if (!patientDoc.exists) {
       return res.status(404).json({
         success: false,
-        error: "Không tìm thấy bệnh nhân"
+        error: "Patient not found"
       });
     }
 
     const patientData = patientDoc.data();
 
-    // Check for ProfileNormal and HealthProfile in main document
     const hasProfileNormalArray = Array.isArray(patientData.ProfileNormal);
     const hasHealthProfileArray = Array.isArray(patientData.HealthProfile);
-
-    // Check subcollections for fallback
-    let subcollectionProfiles = { normalProfile: null, healthProfile: null };
-
-    try {
-      const normalProfileDoc = await db.collection('users').doc(patientId).collection('Profile').doc('NormalProfile').get();
-      if (normalProfileDoc.exists) {
-        subcollectionProfiles.normalProfile = normalProfileDoc.data();
-      }
-
-      const healthProfileDoc = await db.collection('users').doc(patientId).collection('Profile').doc('HealthProfile').get();
-      if (healthProfileDoc.exists) {
-        subcollectionProfiles.healthProfile = healthProfileDoc.data();
-      }
-    } catch (error) {
-      console.error("Lỗi khi lấy subcollection:", error);
-    }
 
     res.json({
       success: true,
@@ -559,8 +511,16 @@ router.get('/check-patient-structure/:patientId', async (req, res) => {
           hasHealthProfileArray,
           healthProfileValue: patientData.HealthProfile || null,
           role: patientData.Role || null,
+          displayName: patientData.displayName || null,
+          name: patientData.name || null,
+          fullName: patientData.fullName || null,
+          DoB: patientData.DoB || null,
+          gender: patientData.gender || null,
+          address: patientData.address || null,
+          CCCD: patientData.CCCD || null,
+          phone: patientData.phone || null,
+          healthProfileObject: patientData.healthProfile || null
         },
-        subcollections: subcollectionProfiles
       }
     });
 

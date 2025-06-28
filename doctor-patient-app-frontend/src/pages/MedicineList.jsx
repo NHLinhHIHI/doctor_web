@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import MedicineForm from "./MedicineForm";
+import "./medicineList.css";
 
 const MedicineList = () => {
   const [medicines, setMedicines] = useState([]);
@@ -57,21 +58,18 @@ const totalPages = Math.ceil(filteredMedicines.length / perPage);
   
 
   return (
-    
-    <div> <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 20, marginTop: 20 }}>
-  <input
-    type="text"
-    placeholder="🔍 Tìm thuốc theo tên..."
-    value={searchTerm}
-    onChange={(e) => setSearchTerm(e.target.value)}
-    style={{ padding: 15, width: 300 }}
-  />
-  <button 
-  style={{ padding: 15, width: 300 }}
-  onClick={handleAddNew}>➕ Thêm thuốc mới</button>
-</div>
-
-        
+    <div className="medicine-list-container">
+      <div className="medicine-list-toolbar">
+        <input
+          type="text"
+          placeholder="🔍 Tìm thuốc theo tên..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <button 
+        className="add-medicine-btn"
+        onClick={handleAddNew}>➕ Thêm thuốc mới</button>
+      </div>
       {showForm ? (
         <MedicineForm
           medicine={selectedMedicine}
@@ -80,9 +78,7 @@ const totalPages = Math.ceil(filteredMedicines.length / perPage);
         />
       ) : (
         <>
-         
-
-          <table border="1" cellPadding="10" style={{ marginTop: 20 }}>
+          <table className="medicine-table" border="1" cellPadding="10">
             <thead>
               <tr>
                 <th>Tên thuốc</th>
@@ -104,34 +100,20 @@ const totalPages = Math.ceil(filteredMedicines.length / perPage);
                   <td>{m.usage}</td>
                   <td>{m.company}</td>
                   <td>
-                    <button onClick={() => handleEdit(m)}>✏️ Sửa</button>{" "}
-                    <button onClick={() => handleDelete(m.id)}>🗑️ Xoá</button>
+                    <button className="medicine-action-btn" onClick={() => handleEdit(m)}>✏️ Sửa</button>{" "}
+                    <button className="medicine-action-btn" onClick={() => handleDelete(m.id)}>🗑️ Xoá</button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-
-          <div style={{
-  position: "fixed",
-  bottom: 20,
-  left: "50%",
-  transform: "translateX(-50%)",
-  display: "flex",
-  gap: 10,
-  backgroundColor: "white",
-  padding: "5px 15px",
-  borderRadius: 10,
-  boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-  zIndex: 999
-}}>
+          <div className="medicine-pagination">
             {page > 1 && (
               <button onClick={() => setPage(page - 1)}>⬅️ Trước</button>
             )}
-  <span>Trang {page}/{totalPages}</span>
-  <button disabled={page === totalPages} onClick={() => setPage(page + 1)}>➡️ Tiếp</button>
-</div>
-
+            <span>Trang {page}/{totalPages}</span>
+            <button disabled={page === totalPages} onClick={() => setPage(page + 1)}>➡️ Tiếp</button>
+          </div>
         </>
       )}
     </div>
