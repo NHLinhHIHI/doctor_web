@@ -482,9 +482,9 @@ const MedicalExam = () => {
 
                 {/* Search Medicine Input (Always visible, tied to active medication row) */}
                 <div className="medicine-search-container">
-                  
 
-                  
+
+
                 </div>
 
                 <div className="medication-header">
@@ -503,55 +503,55 @@ const MedicalExam = () => {
                   >
                     <div className="input-wrapper">
 
-  <input
-    type="text"
-    name="medicineName"
-    placeholder="Tên thuốc"
-    value={med.medicineName}
-    onChange={(e) => handleMedicationChange(index, e)}
-    onFocus={() => setActiveMedicationIndex(index)}
-    className="form-control"
-    readOnly={med.isFromDatabase}
-  />
+                      <input
+                        type="text"
+                        name="medicineName"
+                        placeholder="Tên thuốc"
+                        value={med.medicineName}
+                        onChange={(e) => handleMedicationChange(index, e)}
+                        onFocus={() => setActiveMedicationIndex(index)}
+                        className="form-control"
+                        readOnly={med.isFromDatabase}
+                      />
 
-  {/* 🔽 Gợi ý autocomplete hiển thị ngay dưới input này */}
-  {index === activeMedicationIndex && medicineSearchTerm.trim() !== '' && (
-    <div className="autocomplete-results">
-      {medicineSearchResults.length > 0 ? (
-        medicineSearchResults.map((med) => (
-          <div
-            key={med.id}
-            className="autocomplete-item"
-            onClick={() => handleSelectSearchedMedicine(med)}
-          >
-            <strong>{med.name}</strong> – {med.usage || 'Không có hướng dẫn'}
-          </div>
-        ))
-      ) : !isSearchingMedicine ? (
-        <div className="no-results">
-          <p>Không tìm thấy thuốc "<strong>{medicineSearchTerm}</strong>"</p>
-          <button
-            onClick={() => {
-              const updatedMedications = [...medications];
-              updatedMedications[activeMedicationIndex] = {
-                ...updatedMedications[activeMedicationIndex],
-                medicineName: medicineSearchTerm.trim(),
-                isFromDatabase: false,
-              };
-              setMedications(updatedMedications);
-              setMedicineSearchTerm('');
-              setMedicineSearchResults([]);
-            }}
-          >
-            Thêm thủ công
-          </button>
-        </div>
-      ) : (
-        <p>Đang tìm kiếm...</p>
-      )}
-    </div>
-  )}
-</div>
+                      {/* 🔽 Gợi ý autocomplete hiển thị ngay dưới input này */}
+                      {index === activeMedicationIndex && medicineSearchTerm.trim() !== '' && (
+                        <div className="autocomplete-results">
+                          {medicineSearchResults.length > 0 ? (
+                            medicineSearchResults.map((med) => (
+                              <div
+                                key={med.id}
+                                className="autocomplete-item"
+                                onClick={() => handleSelectSearchedMedicine(med)}
+                              >
+                                <strong>{med.name}</strong> – {med.usage || 'Không có hướng dẫn'}
+                              </div>
+                            ))
+                          ) : !isSearchingMedicine ? (
+                            <div className="no-results">
+                              <p>Không tìm thấy thuốc "<strong>{medicineSearchTerm}</strong>"</p>
+                              <button
+                                onClick={() => {
+                                  const updatedMedications = [...medications];
+                                  updatedMedications[activeMedicationIndex] = {
+                                    ...updatedMedications[activeMedicationIndex],
+                                    medicineName: medicineSearchTerm.trim(),
+                                    isFromDatabase: false,
+                                  };
+                                  setMedications(updatedMedications);
+                                  setMedicineSearchTerm('');
+                                  setMedicineSearchResults([]);
+                                }}
+                              >
+                                Thêm thủ công
+                              </button>
+                            </div>
+                          ) : (
+                            <p>Đang tìm kiếm...</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
 
                     <input
                       type="text"
@@ -571,9 +571,9 @@ const MedicalExam = () => {
                     />
                     <input
                       type="text"
-                      name="usageNotes"
+                      name="frequency"
                       placeholder="VD: Sáng 1, Tối 1"
-                      value={med.usageNotes}
+                      value={med.frequency}
                       onChange={(e) => handleMedicationChange(index, e)}
                       className="form-control"
                     />
@@ -581,10 +581,10 @@ const MedicalExam = () => {
                       type="text"
                       name="frequency"
                       placeholder="VD: Sau ăn no"
-                      value={med.frequency}//frequency
+                      value={med.usageNotes}//frequency
                       onChange={(e) => handleMedicationChange(index, e)}
                       className="form-control"
-                      
+
                     />
                     <button
                       className="remove-btn"

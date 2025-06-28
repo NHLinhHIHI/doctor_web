@@ -102,9 +102,6 @@ const getNowInUTCPlus7 = () => {
   return new Date(utcTime + UTC_PLUS_7_OFFSET_MS);
 };
 
-
-
-
 // GET - Lấy danh sách bệnh nhân đang chờ trong ngày với timeSlot và examinationDate
 router.get('/waiting-patients', async (req, res) => {
   try {
@@ -114,14 +111,20 @@ router.get('/waiting-patients', async (req, res) => {
       return res.status(400).json({ success: false, error: "Missing doctor ID." });
     }
 
+    const startOfDay = new Date(date + 'T00:00:00.000+07:00');
+    const endOfDay = new Date(date + 'T23:59:59.999+07:00');
     const snapshot = await db.collection('HisSchedule')
       .where('doctorID', '==', doctorId)
       .where('status', '==', 'wait')
+      .where('examinationDate', '>=', startOfDay)
+      .where('examinationDate', '<=', endOfDay)
       .orderBy("examinationDate", "asc")
       .orderBy("timeOrder", "asc")
       .get();
 
     const waitingPatientsPromises = snapshot.docs.map(async (doc) => {
+      console.log(`[HisSchedule ID] Matched document: ${doc.id}`);
+
       const appointment = {
         id: doc.id,
         ...doc.data()
@@ -157,7 +160,7 @@ router.get('/waiting-patients', async (req, res) => {
       }
 
       if (!isNaN(appointmentDate.getTime())) {
-        appointment.appointmentTimeSlot = appointmentDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+        appointment.appointmentTimeSlot = appointment.timeSlot || 'N/A';
       } else {
         appointment.appointmentTimeSlot = String(appointment.timeSlot || 'N/A');
       }
@@ -197,16 +200,9 @@ router.get('/waiting-patients', async (req, res) => {
     const validWaitingPatients = waitingPatients.filter(p => p.patientId && p.patientName !== "Không có ID bệnh nhân");
 
     validWaitingPatients.sort((a, b) => {
-      const timeA = String(a.appointmentTimeSlot || '00:00');
-      const timeB = String(b.appointmentTimeSlot || '00:00');
-
-      const [hoursA, minutesA] = timeA.split(':').map(Number);
-      const [hoursB, minutesB] = timeB.split(':').map(Number);
-
-      if (hoursA !== hoursB) {
-        return hoursA - hoursB;
-      }
-      return minutesA - minutesB;
+      const [ha, ma] = (a.timeSlot || '00:00').split(':').map(Number);
+      const [hb, mb] = (b.timeSlot || '00:00').split(':').map(Number);
+      return ha !== hb ? ha - hb : ma - mb;
     });
 
     const responseDate = date || getNowInUTCPlus7().toISOString().split('T')[0].substring(0, 10); // Lấy phần YYYY-MM-DD
@@ -255,8 +251,6 @@ router.post('/', async (req, res) => {
         error: "Cần có ít nhất một loại thuốc."
       });
     }
-
-
     const validMedications = medications.filter(med => med.medicineName && med.medicineName.trim() !== "");
     if (validMedications.length === 0) {
       return res.status(400).json({
@@ -264,15 +258,22 @@ router.post('/', async (req, res) => {
         error: "Không có thuốc nào có tên hợp lệ."
       });
     }
-    const invalidMedications = medications.filter(med =>
-  !med.dosage || !med.quantity || med.dosage.trim() === "" || med.quantity.trim() === ""
-);
-if (invalidMedications.length > 0) {
-  return res.status(400).json({
-    success: false,
-    error: "Tất cả thuốc phải có đầy đủ liều dùng (dosage) và số lượng (quantity)."
-  });
-}
+
+    const validMedicationsss = medications.filter(med =>
+      med.medicineName?.trim() &&
+      med.dosage?.trim() &&
+      med.usageNotes?.trim() &&
+      med.quantity?.trim() &&
+      med.frequency?.trim()
+    );
+
+    if (validMedicationsss.length !== medications.length) {
+      return res.status(400).json({
+        success: false,
+        error: "Nhập thuốc đầy đủ thông tin."
+      });
+    }
+
 
 
     // Tạo Timestamp cho reExamDate dựa trên UTC+7
