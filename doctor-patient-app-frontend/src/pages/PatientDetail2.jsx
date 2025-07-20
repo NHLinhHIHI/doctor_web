@@ -12,16 +12,26 @@ const PatientDetail2 = ({ patientId,onBack  }) => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("info");
   const calculateBMI = (weightStr, heightStr) => {
-  const weight = parseFloat(weightStr);
-  const heightCm = parseFloat(heightStr);
+  // Làm sạch dữ liệu nhập vào (loại bỏ ký tự không phải số và dấu chấm)
+  const cleanWeight = parseFloat(weightStr.replace(/[^\d.]/g, '')); // Loại bỏ ký tự như "kg"
+  const cleanHeightStr = heightStr.replace(/[^\d.]/g, ''); // Loại bỏ "m", "cm"...
 
-  if (!weight || !heightCm) return "Không xác định";
+  let heightM = 0;
 
-  const heightM = heightCm / 100;
-  const bmi = weight / (heightM * heightM);
-  
-  return bmi.toFixed(1); // Làm tròn 1 chữ số thập phân
+  // Nếu chiều cao dưới 3 thì giả định là đơn vị mét (vd: 1.70)
+  if (parseFloat(cleanHeightStr) < 3) {
+    heightM = parseFloat(cleanHeightStr);
+  } else {
+    // Còn lại giả định là cm
+    heightM = parseFloat(cleanHeightStr) / 100;
+  }
+
+  if (!cleanWeight || !heightM) return "Không xác định";
+
+  const bmi = cleanWeight / (heightM * heightM);
+  return bmi.toFixed(1);
 };
+
 
 
   const fetchPatientDetails = async (patientId) => {

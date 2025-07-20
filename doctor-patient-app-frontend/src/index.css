@@ -7,6 +7,20 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Làm bản toast to hơn và rõ ràng hơn */
+.Toastify__toast {
+  font-size: 18px;       /* Tăng kích thước chữ */
+  padding: 20px;         /* Tăng khoảng cách bên trong */
+  border-radius: 12px;   /* Bo góc nhiều hơn */
+  min-height: 80px;      /* Tăng chiều cao tối thiểu */
+}
+
+/* Tuỳ chọn làm chữ đậm hoặc có hiệu ứng */
+.Toastify__toast-body {
+  font-weight: 600;
+  line-height: 1.5;
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;

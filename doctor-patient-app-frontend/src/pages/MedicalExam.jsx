@@ -8,6 +8,7 @@ import { FaPlus, FaTrash, FaPrint, FaSave, FaUndo, FaStethoscope, FaUserInjured,
 // import { collection, query, where, getDocs, doc, orderBy, Timestamp, onSnapshot, addDoc, setDoc, writeBatch, collectionGroup, getDoc } from "firebase/firestore"; // Không còn cần các hàm Firestore
 import axios from 'axios';
 import PatientRecord from '../components/PatientRecord';
+import { notifyInfo, notifySuccess, notifyError} from '../utils/toastUtils';
 
 // API endpoint configuration
 const API_CONFIG = {
@@ -91,7 +92,7 @@ const MedicalExam = () => {
       }
     } catch (error) {
       console.error("Lỗi khi tải danh sách bệnh nhân chờ từ API:", error);
-      alert("Không thể tải danh sách bệnh nhân chờ. Vui lòng thử lại sau.");
+      notifyError("Không thể tải danh sách bệnh nhân chờ. Vui lòng thử lại sau.");
       setWaitingPatients([]); // Clear list on error
     }
   }, [currentDoctor.id]); // Dependency array cho useCallback
@@ -252,19 +253,19 @@ const MedicalExam = () => {
   const saveExamination = async () => {
     // Validate required fields
     if (!selectedAppointment) {
-      alert("Vui lòng chọn một bệnh nhân từ danh sách chờ.");
+      notifyInfo("Vui lòng chọn một bệnh nhân từ danh sách chờ.");
       return;
     }
 
     if (!diagnosis.trim()) {
-      alert("Vui lòng nhập chẩn đoán.");
+      notifyError("Vui lòng nhập chẩn đoán.");
       return;
     }
 
     // Validate medications
     const validMedications = medications.filter(med => med.medicineName && med.medicineName.trim() !== '');
     if (validMedications.length === 0) {
-      alert("Vui lòng nhập ít nhất một loại thuốc.");
+      notifyInfo("Vui lòng nhập ít nhất một loại thuốc.");
       return;
     }
 
@@ -314,7 +315,7 @@ const MedicalExam = () => {
         }
 
         // Show success message and reset form
-        alert('Đã lưu kết quả khám và đơn thuốc thành công!');
+        notifySuccess('Đã lưu kết quả khám và đơn thuốc thành công!');
         resetForm();
       } else {
         throw new Error(response.data.error || "Không thể lưu đơn thuốc");
@@ -330,21 +331,21 @@ const MedicalExam = () => {
         console.error("API request error (no response):", error.request);
         errorMessage = "Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng và thử lại sau.";
       }
-      alert(errorMessage);
+      notifyError(errorMessage);
     } finally {
       setIsSaving(false);
     }
   };
 
   const printPrescription = () => {
-    alert("Chức năng in chi tiết sẽ được phát triển sau. Tạm thời sẽ in toàn bộ trang.");
+    notifyInfo("Chức năng in chi tiết sẽ được phát triển sau. Tạm thời sẽ in toàn bộ trang.");
     window.print();
   };
 
   // Function to view patient's medical record
   const viewPatientRecord = () => {
     if (!selectedAppointment || !selectedAppointment.patientId) {
-      alert("Không thể truy cập hồ sơ bệnh nhân. Vui lòng kiểm tra ID bệnh nhân.");
+      notifyError("Không thể truy cập hồ sơ bệnh nhân. Vui lòng kiểm tra ID bệnh nhân.");
       return;
     }
     // Show the patient record modal

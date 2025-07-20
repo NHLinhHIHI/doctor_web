@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './doctorSchedule.css'; // Dùng lại CSS của admin nếu giống
+import { notifyError , notifySuccess,notifyWarning } from '../utils/toastUtils';
 
 function DoctorScheduleView() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -8,6 +9,10 @@ function DoctorScheduleView() {
   const [doctor, setDoctor] = useState(null);
   const [doneDoctors, setDoneDoctors] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+const [pendingRegistration, setPendingRegistration] = useState(null); // lưu shift, room đang muốn đăng ký
+const [isLoading, setIsLoading] = useState(true);
+
 
   const shifts = ['Morning', 'Afternoon'];
  
@@ -52,78 +57,62 @@ function DoctorScheduleView() {
 };
 
 
-  const handleRegister = async (shift, room) => {
+const handleRegister = async (shift, room) => {
   if (!selectedDate || !doctor) return;
 
   const dateStr = formatISODate(selectedDate);
 
-  // ✅ 1. Kiểm tra nếu bác sĩ đã đăng ký ca này (dù là phòng nào)
   const alreadyRegisteredSameShift = doneDoctors.some(d =>
     d.date === dateStr && d.shift === shift && d.doctorID === doctor.id
   );
 
   if (alreadyRegisteredSameShift) {
-    alert(`Bạn đã đăng ký một phòng khác trong ca ${shift}. Không thể đăng ký thêm.`);
+    notifyWarning(`Bạn đã đăng ký một phòng khác trong ca ${shift}.`);
     return;
   }
 
-  // ✅ 2. Kiểm tra nếu có bác sĩ khác đã đăng ký cùng ca + phòng này
   const slotTakenByAnother = doneDoctors.some(d =>
     d.date === dateStr && d.shift === shift && d.room === room && d.doctorID !== doctor.id
   );
 
   if (slotTakenByAnother) {
-    alert("Phòng này đã được đặt bởi bác sĩ khác.");
+    notifyWarning("Phòng này đã được đặt bởi bác sĩ khác.");
     return;
   }
 
-  const confirm = window.confirm(`Bạn có muốn đăng ký ${shift}, phòng ${room} ngày ${formatDate(selectedDate)} không?`);
-  if (!confirm) return;
-
-  try {
-    const res = await fetch("http://localhost:5000/schedule2/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        date: dateStr,
-        shift,
-        room,
-        doctorID: doctor.id
-      })
-    });
-
-    const result = await res.json();
-    if (res.ok) {
-      alert("Đăng ký thành công. Đang đợi admin duyệt.");
-      fetchDoneDoctors(); // Refresh lại danh sách để phản ánh
-    } else {
-      alert(`Lỗi: ${result.message}`);
-    }
-  } catch (err) {
-    console.error("Đăng ký thất bại:", err);
-    alert("Lỗi khi đăng ký ca.");
-  }
+  // Hiển thị modal xác nhận
+  setPendingRegistration({ shift, room });
+  setShowRegisterModal(true);
 };
 
+
   useEffect(() => {
-    const userInfo = JSON.parse(localStorage.getItem("user"));
-    if (userInfo && userInfo.role === "doctor") {
-      setDoctor(userInfo); // doctor.id dùng trong đăng ký
-      fetchSchedules();
-      fetchNotifications(userInfo.id);
-      fetchDoneDoctors();
-      
-      setSelectedDate(new Date());
-    } else {
-      window.location.href = "/";
+  const userInfo = JSON.parse(localStorage.getItem("user"));
+  if (!userInfo || userInfo.role !== "doctor") {
+    window.location.href = "/";
+    return;
+  }
+
+  setDoctor(userInfo);
+  setSelectedDate(new Date());
+
+  const loadInitialData = async () => {
+    try {
+      await Promise.all([
+        fetchSchedules(),
+        fetchNotifications(userInfo.id),
+        fetchDoneDoctors()
+      ]);
+    } catch (err) {
+      notifyError("Lỗi khi tải dữ liệu");
+    } finally {
+      setIsLoading(false); // Chỉ hiển thị giao diện khi tất cả dữ liệu đã load xong
     }
-    
-    // Add cleanup function
-    return () => {
-      // This ensures any pending promises or listeners are properly cleaned up
-      // when the component unmounts
-    };
-  }, []);  
+  };
+
+  loadInitialData();
+}, []);
+
 
   const fetchSchedules = async () => {
     try {
@@ -146,6 +135,7 @@ function DoctorScheduleView() {
       console.error(err);
     }
   };
+  
   const fetchDoneDoctors = async () => {
     try {
       const res = await fetch("http://localhost:5000/schedule2/done");
@@ -176,12 +166,29 @@ function DoctorScheduleView() {
         date.getFullYear() === selectedDate.getFullYear();
 
       const iso = formatISODate(date);
-      const hasSchedule = !!savedSchedules[iso];
+      
+      const schedule = savedSchedules[iso];
+const hasSchedule = !!schedule;
+
+let scheduleClass = '';
+
+if (hasSchedule) {
+  const morningOpen = schedule.MorningRooms && schedule.MorningRooms.length > 0;
+  const afternoonOpen = schedule.AfternoonRooms && schedule.AfternoonRooms.length > 0;
+
+  if (morningOpen || afternoonOpen) {
+    scheduleClass = 'has-schedule'; // màu xanh
+  } else {
+    scheduleClass = 'all-closed'; // màu xám
+  }
+}
+
 
       calendar.push(
         <div
           key={day}
-          className={`calendar-day ${isSelected ? 'selected' : ''} ${hasSchedule ? 'has-schedule' : ''}`}
+        className={`calendar-day ${isSelected ? 'selected' : ''} ${scheduleClass}`}
+
           onClick={() => handleDateClick(date)}
         >
           {day}
@@ -196,6 +203,15 @@ function DoctorScheduleView() {
     const days = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
     return days[date.getDay()];
   };
+  if (isLoading) {
+  return (
+    <div className="loading-screen">
+  <div className="spinner"></div>
+  <p>Đang tải dữ liệu, vui lòng chờ...</p>
+</div>
+  );
+}
+
 
   return (
     <div className="doctor-schedule1">
@@ -222,9 +238,29 @@ function DoctorScheduleView() {
         const isoDate = formatISODate(selectedDate);
         const schedule = savedSchedules[isoDate];
 
-        if (!schedule) {
-          return <div className="selected-date-info"><h3>Không có ca nào được mở trong ngày này</h3></div>;
-        }
+      if (!schedule) {
+  return (
+    <div className="selected-date-info">
+      <h3>Không có lịch trong ngày này</h3>
+    </div>
+  );
+}
+
+const morningRooms = schedule.MorningRooms || [];
+const afternoonRooms = schedule.AfternoonRooms || [];
+const totalOpen = morningRooms.length + afternoonRooms.length;
+
+if (totalOpen === 0) {
+  return (
+    <div className="selected-date-info">
+      <h3>{getDayName(selectedDate)}, {formatDate(selectedDate)}</h3>
+      <p style={{ color: 'gray', fontStyle: 'italic' }}>
+        Tất cả các phòng đã bị đóng trong ngày này.
+      </p>
+    </div>
+  );
+}
+
 
         return (
           <div className="selected-date-info">
@@ -252,7 +288,7 @@ function DoctorScheduleView() {
         className={`schedule-item ${doneSlot ? 'booked' : 'open'}`}
         onClick={() => {
           if (doneSlot && !isMine) {
-            alert(`Phòng này đã được đặt bởi bác sĩ khác ${doneSlot.name}`);
+            notifyError(`Phòng này đã được đặt bởi bác sĩ khác ${doneSlot.name}`);
           } else if (!doneSlot) {
             handleRegister(shift, room);
           }
@@ -311,7 +347,59 @@ function DoctorScheduleView() {
         </table>
       </div>
     )}
-    
+    {showRegisterModal && pendingRegistration && (
+  <div className="modal-overlay" onClick={() => setShowRegisterModal(false)}>
+    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      <h3>Xác nhận đăng ký ca</h3>
+      <p>Bạn có chắc chắn muốn đăng ký <strong>{pendingRegistration.shift}</strong>, phòng <strong>{pendingRegistration.room}</strong> vào ngày <strong>{formatDate(selectedDate)}</strong> không?</p>
+      <div className="modal-actions">
+        <button
+          className="btn btn-success"
+          onClick={async () => {
+            try {
+              const res = await fetch("http://localhost:5000/schedule2/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  date: formatISODate(selectedDate),
+                  shift: pendingRegistration.shift,
+                  room: pendingRegistration.room,
+                  doctorID: doctor.id
+                })
+              });
+
+              const result = await res.json();
+              if (res.ok) {
+                notifySuccess("Đăng ký thành công. Đang đợi admin duyệt.");
+                fetchDoneDoctors();
+              } else {
+                notifyError(`Lỗi: ${result.message}`);
+              }
+            } catch (err) {
+              console.error("Đăng ký thất bại:", err);
+              notifyError("Lỗi khi đăng ký ca.");
+            }
+
+            setShowRegisterModal(false);
+            setPendingRegistration(null);
+          }}
+        >
+        Xác nhận
+        </button>
+        <button
+          className="btn btn-secondary"
+          onClick={() => {
+            setShowRegisterModal(false);
+            setPendingRegistration(null);
+          }}
+        >
+        Hủy
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
     
   );

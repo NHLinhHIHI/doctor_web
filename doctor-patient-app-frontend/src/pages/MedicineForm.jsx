@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-
+import { notifySuccess, } from "../utils/toastUtils";
 const MedicineForm = ({ medicine, onClose, onSave }) => {
   const [formData, setFormData] = useState({
     name: medicine?.name || "",
@@ -22,10 +22,13 @@ const MedicineForm = ({ medicine, onClose, onSave }) => {
     e.preventDefault();
     if (medicine) {
       await axios.put(`http://localhost:5000/medicine/${medicine.id}`, formData);
+      notifySuccess(" Cập nhật thuốc thành công!");
     } else {
       await axios.post(`http://localhost:5000/medicine`, formData);
+      notifySuccess(" Thêm thuốc mới thành công!");
     }
     onSave();
+    
   };
 
   return (

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { FaBell, FaEye } from "react-icons/fa";
 import "./NotificationCardList.css"; // Đảm bảo bạn có file CSS tương ứng
+import { notifySuccess , notifyError } from "../utils/toastUtils";
 
 function NotificationCardList() {
   const [notifications, setNotifications] = useState([]);
@@ -37,7 +38,7 @@ function NotificationCardList() {
   const handleApprove = async (noti) => {
     const selected = selectedOptions[noti.id];
     if (!selected || !selected.room || !selected.slot) {
-      return alert("Vui lòng chọn phòng và số slot trước khi phê duyệt.");
+      return notifyError("Vui lòng chọn phòng và số slot trước khi phê duyệt.");
     }
 
     try {
@@ -56,10 +57,10 @@ function NotificationCardList() {
         }),
       });
 
-      // alert("Phê duyệt thành công!");
+      notifySuccess("Phê duyệt thành công!");
       fetchNotifications();
     } catch (error) {
-      alert("Phê duyệt thất bại.");
+      notifyError("Phê duyệt thất bại.");
     }
   };
 

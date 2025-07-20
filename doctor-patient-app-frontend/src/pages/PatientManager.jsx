@@ -20,20 +20,15 @@ const navigate = useNavigate();
   }, []);
 
   const fetchPatients = async () => {
-    try {
-      const res = await axios.get("http://localhost:5000/manager/around");
-      const data = res.data.records;
+  try {
+    const res = await axios.get(`http://localhost:5000/manager/around?date=${selectedDate}`);
+    const data = res.data.records;
+    setPatients(data); // Không cần lọc nữa
+  } catch (err) {
+    console.error("Lỗi khi lấy dữ liệu bệnh nhân:", err);
+  }
+};
 
-      const filtered = data.filter((item) => {
-        const normalized = normalizeDate(item.examinationDate);
-        return normalized === selectedDate;
-      });
-
-      setPatients(filtered);
-    } catch (err) {
-      console.error("Lỗi khi lấy dữ liệu bệnh nhân:", err);
-    }
-  };
 
   const getStatusText = (status, date) => {
     if (status === "wait") return "Đợi khám";

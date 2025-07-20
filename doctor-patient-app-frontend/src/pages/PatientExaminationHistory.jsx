@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { FaArrowLeft,FaEnvelope , FaFilter, FaSearch, FaCalendarAlt, FaPrint, FaDownload, FaInfoCircle, FaTimes, FaArrowUp, FaPills, FaClipboardList } from 'react-icons/fa';
 import './patientExaminationHistory.css';
+import { notifySuccess, notifyError } from '../utils/toastUtils';
 
 const PatientExaminationHistory = () => {
   const { patientId } = useParams();
@@ -58,13 +59,13 @@ const PatientExaminationHistory = () => {
     });
     const data = await res.json();
     if (data.success) {
-      alert('Đã gửi nhắc lịch thành công!');
+      notifySuccess('Đã gửi nhắc lịch thành công!');
     } else {
-      alert('Không thể gửi nhắc lịch');
+      notifyError('Không thể gửi nhắc lịch');
     }
   } catch (error) {
     console.error(error);
-    alert('Lỗi khi gửi nhắc lịch');
+    notifyError('Lỗi khi gửi nhắc lịch');
   }
 };
 
@@ -398,13 +399,13 @@ const PatientExaminationHistory = () => {
     const data = await res.json();
 
     if (data.success) {
-      alert('Đã gửi file PDF qua email cho bệnh nhân!');
+      notifySuccess('Đã gửi file PDF qua email cho bệnh nhân!');
     } else {
-      alert('Không thể gửi mail!');
+      notifyError('Không thể gửi mail!');
     }
   } catch (error) {
     console.error('Lỗi khi gửi email:', error);
-    alert('Lỗi khi gửi email!');
+    notifyError('Lỗi khi gửi email!');
   } finally {
     setProcessingAction(false);
   }

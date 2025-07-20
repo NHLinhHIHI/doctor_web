@@ -8,6 +8,7 @@ import MedicalExam from "./MedicalExam";
 //import Chat from "./chat";
 import { useRef } from "react";
 import ChatApp from "./ChatApp";
+import { notifySuccess , notifyError } from "../utils/toastUtils";
 
 // Auto retry component
 
@@ -76,14 +77,14 @@ const [chatInfo, setChatInfo] = useState(null); // { chatID, otherID }
         body: JSON.stringify(updatedDoctor),
       });
       const data = await res.json();
-      alert("Cập nhật thành công!");
+      notifySuccess("Cập nhật thành công!");
 
       const newDoctor = { ...doctor, ...updatedDoctor };
       setDoctor(newDoctor);
       localStorage.setItem("user", JSON.stringify(newDoctor));
       setEditing(false);
     } catch (err) {
-      alert("Cập nhật thất bại!");
+      notifyError("Cập nhật thất bại!");
     }
   };
 
@@ -112,15 +113,16 @@ const [chatInfo, setChatInfo] = useState(null); // { chatID, otherID }
       });
 
       if (res.ok) {
-        alert("Đổi mật khẩu thành công!");
+        notifySuccess("Đổi mật khẩu thành công!");
+        navigate("/login");
         e.target.reset();
       } else {
         const error = await res.json();
-        alert(error.message || "Đổi mật khẩu thất bại!");
+        notifyError(error.message || "Đổi mật khẩu thất bại!");
       }
     } catch (err) {
       console.error(err);
-      alert("Lỗi server khi đổi mật khẩu.");
+      notifyError("Lỗi server khi đổi mật khẩu.");
     }
   };
 

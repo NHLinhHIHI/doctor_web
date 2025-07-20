@@ -9,14 +9,22 @@ const fromDate = new Date(now.toDate().getTime() - sevenDaysMillis);
 const toDate = new Date(now.toDate().getTime() + sevenDaysMillis);
 router.get("/around", async (req, res) => {
   try {
-    const now = admin.firestore.Timestamp.now();
-    const sevenDaysMillis = 7 * 24 * 60 * 60 * 1000;
-    const fromDate = new Date(now.toDate().getTime() - sevenDaysMillis);
-    const toDate = new Date(now.toDate().getTime() + sevenDaysMillis);
+    const { date } = req.query;
+
+    if (!date) {
+      return res.status(400).json({ error: "Thiếu ngày cần truy vấn (query: ?date=yyyy-mm-dd)" });
+    }
+
+    // Chuyển date từ chuỗi sang Date object
+    const selectedDate = new Date(date); // yyyy-mm-dd
+    selectedDate.setHours(0, 0, 0, 0); // bắt đầu ngày
+
+    const endDate = new Date(selectedDate);
+    endDate.setHours(23, 59, 59, 999); // kết thúc ngày
 
     const hisSnap = await db.collection("HisSchedule")
-      .where("examinationDate", ">=", admin.firestore.Timestamp.fromDate(fromDate))
-      .where("examinationDate", "<=", admin.firestore.Timestamp.fromDate(toDate))
+      .where("examinationDate", ">=", admin.firestore.Timestamp.fromDate(selectedDate))
+      .where("examinationDate", "<=", admin.firestore.Timestamp.fromDate(endDate))
       .get();
 
     const result = [];
@@ -33,9 +41,6 @@ router.get("/around", async (req, res) => {
         examinationDate
       } = data;
 
-
-
-    //  Lấy thông tin user
       let patientInfo = null;
       try {
         const patientDoc = await db.collection("users").doc(patientID).get();
@@ -45,6 +50,7 @@ router.get("/around", async (req, res) => {
       } catch (err) {
         console.error(`Error fetching user ${patientID}:`, err);
       }
+
       let doctorName = "";
       try {
         const userDoc = await db.collection("users").doc(doctorID).get();
@@ -54,6 +60,7 @@ router.get("/around", async (req, res) => {
       } catch (err) {
         console.error(`Error fetching doctor ${doctorID}:`, err);
       }
+
       result.push({
         docID: doc.id,
         doctorName,
@@ -74,6 +81,7 @@ router.get("/around", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
 router.get("/medical-history/:patientId", async (req, res) => {
   try {
     const patientId = req.params.patientId;

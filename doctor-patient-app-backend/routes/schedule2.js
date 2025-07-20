@@ -130,8 +130,6 @@ router.post("/approve", async (req, res) => {
 
     const shiftNormalized = shift.trim().charAt(0).toUpperCase() + shift.trim().slice(1).toLowerCase();
     const slotKey = `${shiftNormalized}${room}`;
-
-
     const slot = data[slotKey];
 
     if (!slot || !Array.isArray(slot.history)) {
@@ -139,29 +137,52 @@ router.post("/approve", async (req, res) => {
     }
 
     let updatedHistory = [];
+
+    // Xử lý từng bác sĩ trong history
     for (const entry of slot.history) {
       if (entry.doctorID === doctorID && entry.action === "waiting") {
+        // Người được duyệt
         updatedHistory.push({ ...entry, action: "done" });
+
+        // Gửi thông báo cho bác sĩ được duyệt
+        await db.collection("notifications").add({
+          doctorID: entry.doctorID,
+          date,
+          shift,
+          room,
+          action: "Đã được duyệt",
+          createdAt: admin.firestore.Timestamp.now()
+        });
+
       } else if (entry.action === "waiting") {
-        updatedHistory.push({ ...entry, action: "cancel", cancelAt: admin.firestore.Timestamp.now() });
+        // Những người khác chưa được duyệt
+        updatedHistory.push({
+          ...entry,
+          action: "cancel",
+          cancelAt: admin.firestore.Timestamp.now()
+        });
+
+        // Gửi thông báo bác sĩ bị từ chối
+        await db.collection("notifications").add({
+          doctorID: entry.doctorID,
+          date,
+          shift,
+          room,
+          action: "Đã bị từ chối do đã có người khác được duyệt. Vui lòng đăng ký ca khác.",
+          createdAt: admin.firestore.Timestamp.now()
+        });
+
       } else {
+        // Giữ nguyên các entry khác (ví dụ đã cancel từ trước)
         updatedHistory.push(entry);
       }
     }
 
+    // Cập nhật Firestore
     await scheduleRef.update({
       [`${slotKey}.history`]: updatedHistory,
       [`${slotKey}.doctorIDaccecp`]: doctorID,
     });
-    await db.collection("notifications").add({
-      doctorID,
-      date,
-      shift,
-      room,
-      action: "Đã được duyệt",
-      createdAt: admin.firestore.Timestamp.now()
-    });
-
 
     res.status(200).json({ message: "Approved successfully" });
   } catch (error) {
@@ -169,6 +190,7 @@ router.post("/approve", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
 
 
 // GET /api/schedule/:date
@@ -343,39 +365,51 @@ router.post("/cancel", async (req, res) => {
 // GET /schedule2/done
 router.get('/done', async (req, res) => {
   try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Đặt về đầu ngày
+
+    const maxDate = new Date();
+    maxDate.setDate(today.getDate() + 30);
+    maxDate.setHours(0, 0, 0, 0); // Đặt về đầu ngày
+
     const schedulesSnapshot = await db.collection("Schedule").get();
     const result = [];
 
     for (const scheduleDoc of schedulesSnapshot.docs) {
       const scheduleData = scheduleDoc.data();
-      const date = scheduleData.date;
+      const dateStr = scheduleData.date;
 
-      for (const key in scheduleData) {
-        const slot = scheduleData[key];
+      // Chuyển đổi string "YYYY-MM-DD" thành đối tượng Date để so sánh
+      const scheduleDate = new Date(`${dateStr}T00:00:00`);
 
-        if (
-          slot &&
-          typeof slot === 'object' &&
-          slot.doctorIDaccecp &&
-          slot.room &&
-          slot.shift
-        ) {
-          const doctorID = slot.doctorIDaccecp;
-          const shift = slot.shift;
-          const room = slot.room;
+      if (scheduleDate >= today && scheduleDate <= maxDate) {
+        for (const key in scheduleData) {
+          const slot = scheduleData[key];
 
-          const userDoc = await db.collection("users").doc(doctorID).get();
+          if (
+            slot &&
+            typeof slot === 'object' &&
+            slot.doctorIDaccecp &&
+            slot.room &&
+            slot.shift
+          ) {
+            const doctorID = slot.doctorIDaccecp;
+            const shift = slot.shift;
+            const room = slot.room;
 
-          if (userDoc.exists) {
-            const { name, img } = userDoc.data();
-            result.push({
-              doctorID,
-              name,
-              image: img || "",
-              date,
-              shift,
-              room
-            });
+            const userDoc = await db.collection("users").doc(doctorID).get();
+
+            if (userDoc.exists) {
+              const { name, img } = userDoc.data();
+              result.push({
+                doctorID,
+                name,
+                image: img || "",
+                date: dateStr,
+                shift,
+                room
+              });
+            }
           }
         }
       }
@@ -387,6 +421,7 @@ router.get('/done', async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
 // POST /api/schedule/reopen
 router.post("/reopen", async (req, res) => {
   try {
@@ -431,13 +466,14 @@ router.post("/close", async (req, res) => {
     const scheduleRef = snapshot.docs[0].ref;
     const scheduleDoc = snapshot.docs[0];
     const scheduleId = scheduleDoc.id;
-    const data = snapshot.docs[0].data();
+    const data = scheduleDoc.data();
     const slot = data[slotKey];
 
     if (!slot || slot.isclose === true) {
       return res.status(400).json({ error: "Slot is already closed or doesn't exist" });
     }
 
+    // Cập nhật trạng thái "đóng ca"
     await scheduleRef.update({
       [`${slotKey}.doctorIDaccecp`]: admin.firestore.FieldValue.delete(),
       [`${slotKey}.shift`]: admin.firestore.FieldValue.delete(),
@@ -445,8 +481,14 @@ router.post("/close", async (req, res) => {
       [`${slotKey}.isclose`]: true,
       [`${slotKey}.note`]: note
     });
-    const userSnap = await db.collection("users").doc(slot.doctorIDaccecp).get();
 
+    // Nếu chưa có bác sĩ được xét duyệt → kết thúc sớm
+    if (!slot?.doctorIDaccecp) {
+      return res.status(200).json({ message: "Slot closed (no doctor assigned yet)" });
+    }
+
+    // ✅ FIXED: lấy userSnap sau khi kiểm tra doctorID
+    const userSnap = await db.collection("users").doc(slot.doctorIDaccecp).get();
 
     if (userSnap.exists) {
       const doctorEmail = userSnap.data().email;
@@ -458,7 +500,7 @@ router.post("/close", async (req, res) => {
         text: `Ca làm ngày ${date} (${shift}, phòng ${room}) của bạn đã bị hủy. Lý do: ${note}. Vui lòng đăng ký ca khác nếu cần.`
       };
 
-      transporter.sendMail(mailOptions, function (error, info) {
+      transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
           console.error("Gửi email thất bại:", error);
         } else {
@@ -466,8 +508,8 @@ router.post("/close", async (req, res) => {
         }
       });
     }
-    const patientIDs = [];
 
+    // Cập nhật trạng thái & gửi thông báo cho bệnh nhân
     const hisSnap = await db.collection("HisSchedule")
       .where("scheduleID", "==", scheduleId)
       .where("doctorID", "==", slot.doctorIDaccecp)
@@ -475,23 +517,20 @@ router.post("/close", async (req, res) => {
 
     if (!hisSnap.empty) {
       for (const doc of hisSnap.docs) {
-        const patientID = doc.data().patientID || null;
+        const patientID = doc.data().patientID;
         if (patientID) {
-          patientIDs.push(patientID);
+          await doc.ref.update({ status: "cancel" });
 
-          // Cập nhật trạng thái 'cancel' cho lịch sử
-          await doc.ref.update({
-            status: "cancel"
-          });
           await db.collection("notifications").add({
             doctorID: slot.doctorIDaccecp,
-            patientIDs:[patientID],
+            patientIDs: [patientID],
             date,
             shift,
             room,
-            action: "Do " + note + " Vui lòng đăng kí ca làm khác",
+            action: `Do ${note}. Vui lòng đăng kí ca làm khác.`,
             createdAt: admin.firestore.Timestamp.now()
           });
+
           const patientSnap = await db.collection("users").doc(patientID).get();
           if (patientSnap.exists) {
             const patientEmail = patientSnap.data().email;
@@ -503,25 +542,25 @@ router.post("/close", async (req, res) => {
               text: `Lịch khám với bác sĩ vào ngày ${date} (${shift}, phòng ${room}) đã bị hủy do: ${note}. Vui lòng đặt lại lịch hẹn mới. Xin lỗi vì sự bất tiện này.`
             };
 
-            transporter.sendMail(mailOptions, function (error, info) {
+            transporter.sendMail(mailOptions, (error, info) => {
               if (error) {
                 console.error("Gửi email cho bệnh nhân thất bại:", error);
               } else {
                 console.log("Email đã gửi cho bệnh nhân:", info.response);
               }
             });
-          }}
+          }
         }
       }
-
-
-
-      res.status(200).json({ message: "Shift closed successfully" });
-    } catch (error) {
-      console.error("Close error:", error);
-      res.status(500).json({ error: "Internal Server Error" });
     }
-  });
+
+    res.status(200).json({ message: "Shift closed successfully" });
+  } catch (error) {
+    console.error("Close error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 
 
 

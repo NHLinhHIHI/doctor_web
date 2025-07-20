@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "./addDoctorForm.css";
-
+import {notifySuccess, notifyError} from "../utils/toastUtils"; 
 function AddDoctorForm() {
   const [formData, setFormData] = useState({
     email: "",
@@ -40,10 +40,10 @@ function AddDoctorForm() {
     e.preventDefault();
     try {
       await axios.post("http://localhost:5000/doctor/create-doctor", formData);
-      alert("Tạo bác sĩ thành công!");
+      notifySuccess(" Tạo bác sĩ thành công!");
       navigate("/admin");
     } catch (err) {
-      alert("Lỗi: " + err.message);
+      notifyError(" Lỗi: " + err.message);
     }
   };
 

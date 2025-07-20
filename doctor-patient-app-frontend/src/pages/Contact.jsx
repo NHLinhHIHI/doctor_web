@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaPhone, FaMapMarkerAlt, FaClock, FaEnvelope, FaSignOutAlt} from 'react-icons/fa';
 import './contact.css';
 
+import { notifySuccess , notifyError} from '../utils/toastUtils';
 function DoctorContact() {
   const navigate = useNavigate();
   const [doctor, setDoctor] = useState(null);
@@ -104,7 +105,7 @@ function DoctorContact() {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      alert('Tin nhắn đã được gửi thành công! Chúng tôi sẽ liên hệ lại trong thời gian sớm nhất.');
+      notifySuccess('Tin nhắn đã được gửi thành công! Chúng tôi sẽ liên hệ lại trong thời gian sớm nhất.');
       
       // Reset form
       setFormData({
@@ -116,7 +117,7 @@ function DoctorContact() {
       });
       setErrors({});
     } catch (error) {
-      alert('Có lỗi xảy ra khi gửi tin nhắn. Vui lòng thử lại sau.');
+      notifyError('Có lỗi xảy ra khi gửi tin nhắn. Vui lòng thử lại sau.');
     } finally {
       setIsSubmitting(false);
     }

@@ -11,8 +11,8 @@ import ChatApp from "./pages/ChatApp";
 import { useParams, useLocation } from "react-router-dom";
 import ChatList from "./pages/ChatList";
 import ChatBox from   "./pages/ChatBox";
-
-
+import { ToastContainer } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 import HomePage from "./pages/HomePage";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
@@ -37,7 +37,9 @@ function App() {
   
   return (
     <Router>
+      <ToastContainer position="top-right" autoClose={3000} />
       <Routes>
+         
         <Route path="/login" element={<Login />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/doctor" element={<DoctorHome />} />
@@ -53,6 +55,7 @@ function App() {
         <Route path="/chat/:chatID" element={<ChatPage />} />
       </Routes>
     </Router>
+    
   );
 }
 

@@ -1,5 +1,6 @@
 import React from "react";
 import "./login.css";
+import { notifyError, notifyInfo } from "../utils/toastUtils";
 
 function Login() {
   const handleLogin = async (e) => {
@@ -25,7 +26,7 @@ function Login() {
       if (!data.user) {
         throw new Error("Dữ liệu trả về không hợp lệ!");
       }
-      alert(`Welcome, role: ${data.user.role}`);
+       notifyInfo(`Welcome, role: ${data.user.role}`);
       
 
       // ✅ Lưu thông tin user vào localStorage
@@ -67,11 +68,11 @@ console.log("Lưu vào localStorage:", localStorage.getItem("user"));
 }
 
  else {
-  alert("Bạn không có quyền truy cập.");
+  notifyError("Bạn không có quyền truy cập.");
 }
 } catch (err) {
 console.error(err);
-alert("Đăng nhập thất bại!");
+notifyError("Đăng nhập thất bại!");
 }
   };  
 

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import MedicineForm from "./MedicineForm";
 import "./medicineList.css";
+import { notifyError, notifySuccess } from "../utils/toastUtils";
 
 const MedicineList = () => {
   const [medicines, setMedicines] = useState([]);
@@ -10,6 +11,9 @@ const MedicineList = () => {
   const [showForm, setShowForm] = useState(false);
   const perPage = 10;
   const [searchTerm, setSearchTerm] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+const [medicineToDelete, setMedicineToDelete] = useState(null);
+
 
 
   const fetchMedicines = async () => {
@@ -21,17 +25,28 @@ const MedicineList = () => {
     fetchMedicines();
   }, []);
 
-  const handleDelete = async (id) => {
-    const confirmDelete = window.confirm("Bạn có chắc chắn muốn xoá thuốc này không?");
-    if (!confirmDelete) return;
-    try {  await axios.delete(`http://localhost:5000/medicine/${id}`);
+  const handleDelete = (id) => {
+  const medicine = medicines.find(m => m.id === id);
+  setMedicineToDelete(medicine);
+  setShowDeleteModal(true);
+};
+const confirmDeleteMedicine = async () => {
+  if (!medicineToDelete) return;
+
+  try {
+    await axios.delete(`http://localhost:5000/medicine/${medicineToDelete.id}`);
+    notifySuccess("Xoá thành công!");
     fetchMedicines();
-    alert("Xoá thành công!");
-  }catch (error) {
-      console.error("Lỗi khi xoá:", error);
-      alert("Có lỗi xảy ra khi xoá thuốc.");
-    }
-  };
+  } catch (error) {
+    console.error("Lỗi khi xoá:", error);
+    notifyError("Có lỗi xảy ra khi xoá thuốc.");
+  } finally {
+    setShowDeleteModal(false);
+    setMedicineToDelete(null);
+  }
+};
+
+
 
   const handleEdit = (medicine) => {
     setSelectedMedicine(medicine);
@@ -116,6 +131,19 @@ const totalPages = Math.ceil(filteredMedicines.length / perPage);
           </div>
         </>
       )}
+      {showDeleteModal && medicineToDelete && (
+  <div className="modal-overlay" onClick={() => setShowDeleteModal(false)}>
+    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      <h3>Xác nhận xoá thuốc</h3>
+      <p>Bạn có chắc chắn muốn xoá thuốc <strong>{medicineToDelete.name}</strong> không?</p>
+      <div className="modal-actions">
+        <button className="btn btn-danger" onClick={confirmDeleteMedicine}>🗑️ Xoá</button>
+        <button className="btn btn-secondary" onClick={() => setShowDeleteModal(false)}>❌ Huỷ</button>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 };
