@@ -79,7 +79,7 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
+ 
   100% { transform: rotate(360deg); }
 }
 
@@ -506,17 +506,11 @@ border-left-color: #4299e1;
 }
 
 .action-button {
-  display: flex;
+  min-width: 150px; /* hoặc giá trị hợp lý để không bị giãn */
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.2s;
-  min-width: 130px;
   justify-content: center;
+  gap: 6px;
 }
 
 .action-button:disabled {
@@ -524,22 +518,19 @@ border-left-color: #4299e1;
   cursor: not-allowed;
 }
 
-.action-button.loading {
-  position: relative;
-}
 
-.button-loader {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: white;
-  animation: spin 1s ease-in-out infinite;
-}
 
+
+
+
+.spin-icon {
+  animation: spin 1s linear infinite;
+   font-size: 16px; /* hoặc 1em hoặc kích thước phù hợp */
+  vertical-align: middle;
+}
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .print-button {

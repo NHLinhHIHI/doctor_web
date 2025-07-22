@@ -13,6 +13,9 @@ const MedicineList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 const [medicineToDelete, setMedicineToDelete] = useState(null);
+const [sortField, setSortField] = useState(""); // ví dụ: "name", "dosage", "company"
+const [sortOrder, setSortOrder] = useState("asc"); // "asc" hoặc "desc"
+
 
 
 
@@ -67,7 +70,27 @@ const confirmDeleteMedicine = async () => {
   const filteredMedicines = medicines.filter(m =>
   m.name.toLowerCase().includes(searchTerm.toLowerCase())
 );
-const currentPageData = filteredMedicines.slice(startIndex, startIndex + perPage);
+const sortedMedicines = [...filteredMedicines].sort((a, b) => {
+  if (!sortField) return 0;
+
+  const aValue = a[sortField]?.toString().toLowerCase();
+  const bValue = b[sortField]?.toString().toLowerCase();
+
+  if (aValue < bValue) return sortOrder === "asc" ? -1 : 1;
+  if (aValue > bValue) return sortOrder === "asc" ? 1 : -1;
+  return 0;
+});
+
+const currentPageData = sortedMedicines.slice(startIndex, startIndex + perPage);
+const handleSort = (field) => {
+  if (sortField === field) {
+    setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+  } else {
+    setSortField(field);
+    setSortOrder("asc");
+  }
+};
+
 const totalPages = Math.ceil(filteredMedicines.length / perPage);
 
   
@@ -94,17 +117,26 @@ const totalPages = Math.ceil(filteredMedicines.length / perPage);
       ) : (
         <>
           <table className="medicine-table" border="1" cellPadding="10">
-            <thead>
-              <tr>
-                <th>Tên thuốc</th>
-                <th>Liều lượng </th>
-                <th>Công dụng cơ bản </th>
-                <th>Dạng </th>
-                <th>Cách Sử dụng </th>
-                <th>Nhà Sản Xuất</th>
-                <th>Hành động</th>
-              </tr>
-            </thead>
+         <thead>
+  <tr>
+    <th onClick={() => handleSort("name")}>
+      Tên thuốc {sortField === "name" ? (sortOrder === "asc" ? "🔼" : "🔽") : ""}
+    </th>
+    <th onClick={() => handleSort("dosage")}>
+      Liều lượng {sortField === "dosage" ? (sortOrder === "asc" ? "🔼" : "🔽") : ""}
+    </th>
+    <th>Công dụng cơ bản</th>
+    <th onClick={() => handleSort("unit")}>
+      Dạng {sortField === "unit" ? (sortOrder === "asc" ? "🔼" : "🔽") : ""}
+    </th>
+    <th>Cách sử dụng</th>
+    <th onClick={() => handleSort("company")}>
+      Nhà sản xuất {sortField === "company" ? (sortOrder === "asc" ? "🔼" : "🔽") : ""}
+    </th>
+    <th>Hành động</th>
+  </tr>
+</thead>
+
             <tbody>
               {currentPageData.map((m) => (
                 <tr key={m.id}>

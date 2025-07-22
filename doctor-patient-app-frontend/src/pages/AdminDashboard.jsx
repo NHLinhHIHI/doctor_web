@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "./admin.css";
 import AddDoctorForm from "./AddDoctorForm";
-import NotificationCardList from "./NotificationCardList";
+
 import AdminSchedule from "./AdminSchedule";
 import MedicineList from "./MedicineList";
 import PatientManager from "./PatientManager";
@@ -35,8 +35,8 @@ function AdminDashboard() {
     switch (activeView) {
       case "add-doctor":
         return <AddDoctorForm />;
-      case "notifications":
-        return <NotificationCardList />;
+      // case "notifications":
+      //   return <NotificationCardList />;
       case "schedule":
         return <AdminSchedule />;
       case "Medicine":

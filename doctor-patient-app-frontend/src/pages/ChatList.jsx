@@ -7,17 +7,23 @@ const ChatList = ({ onSelectChat }) => {
 
   useEffect(() => {
     if (!user) return;
-
+const fetchChats = () => {
     axios.get(`http://localhost:5000/chat/${user.id}`)
       .then((res) => {
         const sortedChats = res.data
-  .filter(chat => chat.lastTimestamp?._seconds) // bỏ mấy thằng null
-  .sort((a, b) => b.lastTimestamp._seconds - a.lastTimestamp._seconds);
+          .filter(chat => chat.lastTimestamp?._seconds) // bỏ mấy thằng null
+          .sort((a, b) => b.lastTimestamp._seconds - a.lastTimestamp._seconds);
 
         setChats(sortedChats);
       })
       .catch(err => console.error("Failed to load chats", err));
-  }, [user]);
+  };
+
+  fetchChats();
+  const interval = setInterval(fetchChats, 5000); // Cập nhật mỗi 5 giây
+
+  return () => clearInterval(interval);
+}, [user]);
 
   return (
     <div className="chat-list">
@@ -26,21 +32,21 @@ const ChatList = ({ onSelectChat }) => {
         const otherID = chat.participants.find(id => id !== user.id);
         return (
           <div key={chat.id} className="chat-item" onClick={() => onSelectChat(chat.id, otherID)}>
-          <strong>{chat.otherName || otherID}</strong>
+            <strong>{chat.otherName || otherID}</strong>
 
-           <p>
-  {chat.lastSender === user.id
-    ? "Bạn: "
-    : `${chat.otherName || ""}: `}
-  {chat.lastMessage}
-</p>
+            <p>
+              {chat.lastSender === user.id
+                ? "Bạn: "
+                : `${chat.otherName || ""}: `}
+              {chat.lastMessage}
+            </p>
 
 
             <small>
-  {chat.lastTimestamp?._seconds &&
-    new Date(chat.lastTimestamp._seconds * 1000).toLocaleString()}
-</small>
-   </div>
+              {chat.lastTimestamp?._seconds &&
+                new Date(chat.lastTimestamp._seconds * 1000).toLocaleString()}
+            </small>
+          </div>
         );
       })}
     </div>

@@ -31,7 +31,8 @@ router.post("/send-reminder-email", async (req, res) => {
       from: 'LINH.NH18886@sinhvien.hoasen.edu.vn',
       to: email,  
       subject: "Nhắc lịch khám bệnh",
-      text: `Xin chào bạn  ${name}, Bạn có lịch tái khám vào  ${formattedDate}, mọi sự thay đổi vui lòng liên hệ lại với chúng tôi .`,
+      text: `Xin chào bạn  ${name}, Bạn có lịch tái khám vào  ${formattedDate}, mọi sự thay đổi vui lòng liên hệ lại với chúng tôi .
+                                                                                Thân ái chào!`,
       html
 
     });
@@ -71,10 +72,10 @@ router.post("/send-pdf-email", async (req, res) => {
       from: 'LINH.NH18886@sinhvien.hoasen.edu.vn',
       to: email,
       subject: "Toa thuốc đính kèm",
-      text: `Xin chào ${name}, đây là toa thuốc từ Bác Sĩ bạn đã khám .`,
+      text: `Xin chào ${name}, đây là toa thuốc từ Bác Sĩ bạn đã khám và được gửi theo yêu cầu .`,
       attachments: [
         {
-          filename: 'ToaThuoc.pdf',
+          filename:  `ToaThuoc_${name}.pdf`,
           path: filePath,
         },
       ],

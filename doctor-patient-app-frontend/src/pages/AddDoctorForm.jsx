@@ -32,9 +32,16 @@ function AddDoctorForm() {
     CCCD: "CCCD/CMND",
   };
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+ const handleChange = (e) => {
+  let { name, value } = e.target;
+
+  if (name === "phone" || name === "CCCD") {
+    value = value.replace(/\D/g, ""); // Chỉ giữ lại số
+  }
+
+  setFormData({ ...formData, [name]: value });
+};
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -55,7 +62,16 @@ function AddDoctorForm() {
           <label>{labels[field]}</label>
           <input
             name={field}
-            type={field === "password" ? "password" : "text"}
+             type={
+          field === "password"
+            ? "password"
+            : field === "birthDate"
+            ? "date"
+            : field === "experience" || field === "phone" ||
+              field === "CCCD"
+            ? "number"
+            : "text"
+        }
             value={formData[field]}
             onChange={handleChange}
             required

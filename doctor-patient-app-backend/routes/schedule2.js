@@ -352,7 +352,7 @@ router.post("/cancel", async (req, res) => {
       date,
       shift,
       room,
-      action: "Đã bị từ chối",
+      action: "Đã bị từ chối. Vui lòng đăng ký ca khác.",
       createdAt: admin.firestore.Timestamp.now()
     });
 
@@ -508,6 +508,15 @@ router.post("/close", async (req, res) => {
         }
       });
     }
+    await db.collection("notifications").add({
+            doctorID: slot.doctorIDaccecp,
+            
+            date,
+            shift,
+            room,
+            action: `Do ${note} nên sẽ đóng phòng. Vui lòng đăng kí ca làm khác.`,
+            createdAt: admin.firestore.Timestamp.now()
+          });
 
     // Cập nhật trạng thái & gửi thông báo cho bệnh nhân
     const hisSnap = await db.collection("HisSchedule")
@@ -521,15 +530,7 @@ router.post("/close", async (req, res) => {
         if (patientID) {
           await doc.ref.update({ status: "cancel" });
 
-          await db.collection("notifications").add({
-            doctorID: slot.doctorIDaccecp,
-            patientIDs: [patientID],
-            date,
-            shift,
-            room,
-            action: `Do ${note}. Vui lòng đăng kí ca làm khác.`,
-            createdAt: admin.firestore.Timestamp.now()
-          });
+          
 
           const patientSnap = await db.collection("users").doc(patientID).get();
           if (patientSnap.exists) {
